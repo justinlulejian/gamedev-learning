@@ -16,7 +16,7 @@ public class SpawnManager : MonoBehaviour
   [SerializeField]
   private bool _stopSpawning = false;
 
-  void Start()
+  public void StartSpawning()
   {
     StartCoroutine(SpawnEnemyRoutine());
     StartCoroutine(SpawnPowerupRoutine());
@@ -24,6 +24,8 @@ public class SpawnManager : MonoBehaviour
 
   private IEnumerator SpawnEnemyRoutine()
   {
+    yield return new WaitForSeconds(3.0f);
+    
     while (_stopSpawning == false)
     {
       Vector3 randomPosToSpawn = new Vector3(Random.Range(-8f, 8f), 7, 0);
@@ -35,6 +37,8 @@ public class SpawnManager : MonoBehaviour
 
   private IEnumerator SpawnPowerupRoutine()
   {
+    yield return new WaitForSeconds(3.0f);
+    
     // TODO: Bug where powerup will still spawn if we're waiting while player death
     while (_stopSpawning == false)
     {

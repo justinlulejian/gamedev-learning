@@ -13,6 +13,8 @@ public class Laser : MonoBehaviour
 
     if (transform.position.y > 8f)
     {
+      // TODO: this is meant to destroy triple shots, but it seems if you spam it you can get a few
+      // to remain in the scene and they should be getting deleted.
       if (transform.parent != null)
       {
         Destroy(transform.parent.gameObject);
