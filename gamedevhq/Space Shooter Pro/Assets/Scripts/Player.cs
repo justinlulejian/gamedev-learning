@@ -31,6 +31,13 @@ public class Player : MonoBehaviour
   [SerializeField] 
   private GameObject _shieldsPrefab;
 
+  [SerializeField]
+  private GameObject _leftEngineDamage;
+  [SerializeField]
+  private GameObject _rightEngineDamage;
+  private List<GameObject> _damageObjects;
+  
+
   [SerializeField] 
   private int _score;
   
@@ -52,6 +59,8 @@ public class Player : MonoBehaviour
     }
     
     transform.position = new Vector3(0, 0, 0);
+    
+    _damageObjects = new List<GameObject>{_leftEngineDamage, _rightEngineDamage};
   }
 
   void Update()
@@ -110,6 +119,17 @@ public class Player : MonoBehaviour
       _shieldsPrefab.SetActive(false);
       return;
     }
+    
+    // Randomly select one of the damages to enable if lives > 1, otherwise skip
+    if (_lives > 1)
+    {
+      System.Random random = new System.Random();
+      int randomIndex = random.Next(_damageObjects.Count);
+      _damageObjects[randomIndex].SetActive(true);
+      // TODO: this precludes gaining health so change this is that becomes a feature.
+      _damageObjects.RemoveAt(randomIndex); // Prevent it from being enabled again.
+    }
+    
     _lives--;
     _uiManager.UpdateLives(_lives);
 
