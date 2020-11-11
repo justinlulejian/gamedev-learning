@@ -8,6 +8,9 @@ public class Enemy : MonoBehaviour
 {
   [SerializeField]
   private float _speed = 4f;
+  
+  [SerializeField]
+  private AudioSource _audioSource;
 
   private Player _player;
 
@@ -16,15 +19,20 @@ public class Enemy : MonoBehaviour
   private void Start()
   {
     _player = GameObject.Find("Player").GetComponent<Player>();
+    _animator = gameObject.GetComponent<Animator>();
+    _audioSource = GetComponent<AudioSource>(); 
+    
     if (!_player)
     {
       Debug.LogError("Player is null from Enemy.");
     }
-
-    _animator = gameObject.GetComponent<Animator>();
     if (!_animator)
     {
       Debug.LogError("Animator is null for Enemy.");
+    }
+    if (_audioSource == null)
+    {
+      Debug.LogError("_laserAudioSource was null when creating enemy");
     }
   }
 
@@ -56,6 +64,10 @@ public class Enemy : MonoBehaviour
       // TODO: make this work in the future, at the moment it never gets to setting the animFinished
       // as true.
       // StartCoroutine("PlayDeathAnimationThenDestroy");
+      if (!_audioSource.isPlaying)
+      {
+        _audioSource.Play();
+      }
       Destroy(this.gameObject, 2.8f);
       
     } else if (other.tag == "Laser")
@@ -68,7 +80,11 @@ public class Enemy : MonoBehaviour
       _animator.SetTrigger("OnEnemyDeath");
       _speed = 0f;
       // StartCoroutine("PlayDeathAnimationThenDestroy");
-      Destroy(this.gameObject, 2.8f);
+      if (!_audioSource.isPlaying)
+      {
+        _audioSource.Play();
+      }
+      Destroy(this.gameObject, 3.1f);
     }
   }
 
@@ -98,4 +114,20 @@ public class Enemy : MonoBehaviour
     return animFinished;
   }
 
+  private IEnumerator PlayDestroyedSound()
+  {
+    if (!_audioSource.isPlaying)
+    {
+      _audioSource.Play();
+      yield return new WaitForSeconds(3.0f);
+    }
+  }
+
+  private void OnDestroy()
+  {
+    // TODO: this doesn't work, enemy just immediately disappears. I'm doing this since
+    // SpawnManager.OnPlayerDeath loops and destroys all the enemy's on screen bypassing
+    // the explosion audio playing when we collide with laser or player...
+    // StartCoroutine(PlayDestroyedSound());
+  }
 }

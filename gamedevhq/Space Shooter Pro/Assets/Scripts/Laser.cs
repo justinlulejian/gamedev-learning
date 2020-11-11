@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,6 +7,19 @@ public class Laser : MonoBehaviour
 {
   [SerializeField]
   private float _speed = 8.0f;
+  
+  // private AudioSource _audioSource;
+
+  // private void Start()
+  // {
+  //   _audioSource = GetComponent<AudioSource>();
+  //   
+  //   if (_audioSource == null)
+  //   {
+  //     // TODO: this gets hit but the sound still plays...why?
+  //     Debug.LogError("laser audio source was null when creating laser");
+  //   }
+  // }
 
   void Update()
   {
@@ -22,4 +36,13 @@ public class Laser : MonoBehaviour
       Destroy(this.gameObject);
     }
   }
+
+//   public void PlaySound()
+//   {
+//     if (_audioSource == null)
+//     {
+//       Debug.LogError("laser audio source was null in laser playsound, weird!");
+//     }
+//     _audioSource.Play();
+//   }
 }
