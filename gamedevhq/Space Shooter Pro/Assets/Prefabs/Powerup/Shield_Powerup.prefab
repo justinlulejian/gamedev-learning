@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 8557178925314242118}
   - component: {fileID: 8557178925314242119}
   - component: {fileID: 8557178925314242117}
-  - component: {fileID: 235670221}
+  - component: {fileID: 648936038}
   m_Layer: 0
   m_Name: Shield_Powerup
   m_TagString: Untagged
@@ -146,7 +146,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _speed: 3.5
   _powerupID: 2
---- !u!95 &235670221
+--- !u!95 &648936038
 Animator:
   serializedVersion: 3
   m_ObjectHideFlags: 0
