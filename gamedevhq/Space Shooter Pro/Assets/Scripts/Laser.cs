@@ -9,6 +9,19 @@ public class Laser : MonoBehaviour
 {
   [SerializeField]
   private float _speed = 8.0f;
+  
+  // private AudioSource _audioSource;
+
+  // private void Start()
+  // {
+  //   _audioSource = GetComponent<AudioSource>();
+  //   
+  //   if (_audioSource == null)
+  //   {
+  //     // TODO: this gets hit but the sound still plays...why?
+  //     Debug.LogError("laser audio source was null when creating laser");
+  //   }
+  // }
 
   public Vector3 direction;
   

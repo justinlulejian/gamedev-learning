@@ -32,6 +32,8 @@ public class Enemy : MonoBehaviour
     {
       Debug.LogError("Player is null from Enemy.");
     }
+
+    _animator = gameObject.GetComponent<Animator>();
     if (!_animator)
     {
       Debug.LogError("Animator is null for Enemy.");
