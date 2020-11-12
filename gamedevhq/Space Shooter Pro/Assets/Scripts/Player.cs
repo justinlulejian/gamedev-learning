@@ -36,19 +36,36 @@ public class Player : MonoBehaviour
   [SerializeField]
   private GameObject _rightEngineDamage;
   private List<GameObject> _damageObjects;
-  
+
+  // private AudioSource _laserAudioSource;
+  [SerializeField]
+  private AudioSource _audioSource;
+  [SerializeField]
+  private AudioClip _laserAudioClip;
+  [SerializeField]
+  private AudioClip _explosionAudioClip;
 
   [SerializeField] 
   private int _score;
   
   [SerializeField]
   private UIManager _uiManager;
+
+  private Renderer _renderer;
   
   void Start()
   {
     
     _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
     _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
+    _audioSource = GetComponent<AudioSource>(); 
+    // _laser = _laserPrefab.GetComponent<Laser>();
+    _damageObjects = new List<GameObject>{_leftEngineDamage, _rightEngineDamage};
+    _renderer = GetComponent<Renderer>();
+    _renderer.enabled = true;
+    
+    transform.position = new Vector3(0, 0, 0);
+    
     if (_spawnManager == null)
     {
       Debug.LogError("Spawn manager is null from Player.");
@@ -57,10 +74,23 @@ public class Player : MonoBehaviour
     {
       Debug.LogError("UI manager is null from Player.");
     }
-    
-    transform.position = new Vector3(0, 0, 0);
-    
-    _damageObjects = new List<GameObject>{_leftEngineDamage, _rightEngineDamage};
+    if (_audioSource == null)
+    {
+      Debug.LogError("_audioSource was null when creating player");
+    }
+    if (_renderer == null)
+    {
+      Debug.LogError("_renderer was null when creating player");
+    }
+    // if (_explosionAudioSource == null)
+    // {
+    //   // TODO: this gets hit but the sound still plays...why?
+    //   Debug.LogError("_explosionAudioSource was null when creating player");
+    // }
+    // else
+    // {
+    //   _explosionAudioSource.clip = _explosionAudioClip;
+    // }
   }
 
   void Update()
@@ -108,6 +138,21 @@ public class Player : MonoBehaviour
         _laserPrefab,
         transform.position + new Vector3(0, 1.05f, 0), Quaternion.identity);
     }
+
+    // TODO: triple shot is higher volume and sounds a little off possible because it plays x3?
+    // Is it possible for Tripleshot to just play the sound once but just amp the volume?
+    if (_audioSource == null)
+    {
+      Debug.LogError("_audioSource was null in player firelaser, weird!");
+    }
+    _audioSource.clip = _laserAudioClip;
+    _audioSource.Play();
+
+    // _laserAudioSource.Play();
+    // if (_laserAudioSource == null)
+    // {
+    //   Debug.LogError("laser audio source was null in player firelaser, weird!");
+    // }
   }
 
   public void Damage()
@@ -127,7 +172,7 @@ public class Player : MonoBehaviour
       int randomIndex = random.Next(_damageObjects.Count);
       _damageObjects[randomIndex].SetActive(true);
       // TODO: this precludes gaining health so change this is that becomes a feature.
-      _damageObjects.RemoveAt(randomIndex); // Prevent it from being enabled again.
+      _damageObjects.RemoveAt(randomIndex); // Prevent it from being enabled again .
     }
     
     _lives--;
@@ -136,8 +181,13 @@ public class Player : MonoBehaviour
     if (_lives < 1)
     {
       Debug.Log("Player death");
+      // TODO: this still leaves the damage and the thruster still visible, can I recursively loop through child
+      // objects to destroy or disable them like this?
+      // _renderer.enabled = false;
+      // This below helped with powerups sound on destroy, but doing this causes restart menu not to load...
+      // AudioSource.PlayClipAtPoint(_explosionAudioClip, transform.position);
       _spawnManager.OnPlayerDeath();
-      Destroy(this.gameObject);
+      Destroy(this.gameObject, _audioSource.clip.length);
     }
   }
 

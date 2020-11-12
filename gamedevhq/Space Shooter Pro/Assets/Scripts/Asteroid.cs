@@ -43,6 +43,12 @@ public class Asteroid : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_spawnManager == null)
+        {
+            Debug.LogError("Spawnmanager was null in Asteroid onDestroy not calling start" +
+                           " spawning");
+            return;
+        }
         _spawnManager.StartSpawning();
     }
 }
