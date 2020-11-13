@@ -28,6 +28,7 @@ public class Enemy : MonoBehaviour
     _player = GameObject.Find("Player").GetComponent<Player>();
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
+    _animator = gameObject.GetComponent<Animator>();
 
     // StartCoroutine(FireLasers());
 
@@ -35,8 +36,6 @@ public class Enemy : MonoBehaviour
     {
       Debug.LogError("Player is null from Enemy.");
     }
-
-    _animator = gameObject.GetComponent<Animator>();
     if (!_animator)
     {
       Debug.LogError("Animator is null for Enemy.");
@@ -86,7 +85,7 @@ public class Enemy : MonoBehaviour
 
   private void OnTriggerEnter2D(Collider2D other)
   {
-    if (other.tag == "Player")
+    if (other.CompareTag("Player"))
     {
       Player player = other.transform.GetComponent<Player>();
       if (player != null)
@@ -95,14 +94,14 @@ public class Enemy : MonoBehaviour
       }
       _animator.SetTrigger("OnEnemyDeath");
       _speed = 0f;
-      // TODO: make this work in the future, at the moment it never gets to setting the animFinished
-      // as true.
+      // TODO: try this alterantive in the future, at the moment it never gets to setting
+      // the animFinished as true.
       // StartCoroutine("PlayDeathAnimationThenDestroy");
       _audioSource.Play();
       Destroy(GetComponent<Collider2D>());
       Destroy(this.gameObject, 2.8f);
       
-    } else if (other.tag == "Laser")
+    } else if (other.CompareTag("Laser"))
     {
       Laser laser = other.GetComponent<Laser>();
       if (laser != null)
@@ -125,20 +124,6 @@ public class Enemy : MonoBehaviour
     }
   }
   
-  // private IEnumerator FireLasers()
-  // {
-  //   // TODO: randomize 3-7 seconds
-  //   // yield return new WaitForSeconds(3f);
-  //   GameObject laserObj = Instantiate(
-  //     _laserPrefab,
-  //     transform.position + new Vector3(0, -3, 0),
-  //     Quaternion.identity) as GameObject;
-  //   Laser laser = laserObj.GetComponent<Laser>();
-  //   laser.direction = Vector3.down;
-  //   Debug.Log("Enemy laser created down.");
-  //   yield return new WaitForSeconds(0.1f);
-  // }
-
   private IEnumerator PlayDeathAnimationThenDestroy()
   {
     this.gameObject.tag = "";
@@ -163,22 +148,5 @@ public class Enemy : MonoBehaviour
       }
     }
     return animFinished;
-  }
-
-  private IEnumerator PlayDestroyedSound()
-  {
-    if (!_audioSource.isPlaying)
-    {
-      _audioSource.Play();
-      yield return new WaitForSeconds(3.0f);
-    }
-  }
-
-  private void OnDestroy()
-  {
-    // TODO: this doesn't work, enemy just immediately disappears. I'm doing this since
-    // SpawnManager.OnPlayerDeath loops and destroys all the enemy's on screen bypassing
-    // the explosion audio playing when we collide with laser or player...
-    // StartCoroutine(PlayDestroyedSound());
   }
 }

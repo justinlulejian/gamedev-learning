@@ -54,17 +54,14 @@ public class SpawnManager : MonoBehaviour
 
   public void OnPlayerDeath()
   {
-    Debug.Log("on player death called");
     _stopSpawning = true;
     foreach (Transform enemy in _enemyContainer.transform)
     {
       Destroy(enemy.gameObject);
-      Debug.Log("destroyed enemy");
     }
     foreach (Transform powerup in _powerupContainer.transform)
     {
       Destroy(powerup.gameObject);
-      Debug.Log("destroyed powerup");
     }
   }
 }

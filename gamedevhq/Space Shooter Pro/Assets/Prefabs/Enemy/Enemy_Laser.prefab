@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3897491777811208796}
   - component: {fileID: 3370225395768987888}
   - component: {fileID: 3309541461561484158}
+  - component: {fileID: 7286247935262478042}
   m_Layer: 0
   m_Name: Enemy_Laser
   m_TagString: EnemyLaser
@@ -41,13 +42,13 @@ BoxCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3897491777811208797}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Density: 1
   m_Material: {fileID: 0}
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.001079008, y: -1.3647096}
+  m_Offset: {x: -0.004519999, y: -1.3640214}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -58,7 +59,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.47124955, y: 0.44892073}
+  m_Size: {x: 0.5111649, y: 0.59068894}
   m_EdgeRadius: 0
 --- !u!50 &3309541461561484158
 Rigidbody2D:
@@ -81,6 +82,18 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &7286247935262478042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3897491777811208797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45cd4209716e0ef47a52aee480f523c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &3897491776729376087
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -91,7 +104,7 @@ PrefabInstance:
     - target: {fileID: 6688453021566434961, guid: 5b6ca788de60e714b927e1c3cb6e12cc,
         type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6688453021566434962, guid: 5b6ca788de60e714b927e1c3cb6e12cc,
         type: 3}
@@ -153,8 +166,7 @@ PrefabInstance:
       propertyPath: m_Name
       value: Laser_Left
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 6688453021566434960, guid: 5b6ca788de60e714b927e1c3cb6e12cc, type: 3}
+    m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5b6ca788de60e714b927e1c3cb6e12cc, type: 3}
 --- !u!4 &7693419787630615493 stripped
 Transform:
@@ -172,12 +184,12 @@ PrefabInstance:
     - target: {fileID: 6688453021566434961, guid: 5b6ca788de60e714b927e1c3cb6e12cc,
         type: 3}
       propertyPath: m_IsTrigger
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6688453021566434961, guid: 5b6ca788de60e714b927e1c3cb6e12cc,
         type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6688453021566434962, guid: 5b6ca788de60e714b927e1c3cb6e12cc,
         type: 3}
@@ -254,8 +266,7 @@ PrefabInstance:
       propertyPath: m_Name
       value: Laser_Right
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 6688453021566434960, guid: 5b6ca788de60e714b927e1c3cb6e12cc, type: 3}
+    m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5b6ca788de60e714b927e1c3cb6e12cc, type: 3}
 --- !u!4 &7693419787690112328 stripped
 Transform:

@@ -37,7 +37,6 @@ public class Player : MonoBehaviour
   private GameObject _rightEngineDamage;
   private List<GameObject> _damageObjects;
 
-  // private AudioSource _laserAudioSource;
   [SerializeField]
   private AudioSource _audioSource;
   [SerializeField]
@@ -59,7 +58,6 @@ public class Player : MonoBehaviour
     _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
     _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
     _audioSource = GetComponent<AudioSource>(); 
-    // _laser = _laserPrefab.GetComponent<Laser>();
     _damageObjects = new List<GameObject>{_leftEngineDamage, _rightEngineDamage};
     _renderer = GetComponent<Renderer>();
     _renderer.enabled = true;
@@ -82,15 +80,6 @@ public class Player : MonoBehaviour
     {
       Debug.LogError("_renderer was null when creating player");
     }
-    // if (_explosionAudioSource == null)
-    // {
-    //   // TODO: this gets hit but the sound still plays...why?
-    //   Debug.LogError("_explosionAudioSource was null when creating player");
-    // }
-    // else
-    // {
-    //   _explosionAudioSource.clip = _explosionAudioClip;
-    // }
   }
 
   void Update()
@@ -139,44 +128,25 @@ public class Player : MonoBehaviour
         transform.position + new Vector3(0, 1.05f, 0), Quaternion.identity);
     }
     
-
-    // TODO: triple shot is higher volume and sounds a little off possible because it plays x3?
-    // Is it possible for Tripleshot to just play the sound once but just amp the volume?
-    if (_audioSource == null)
-    {
-      Debug.LogError("_audioSource was null in player firelaser, weird!");
-    }
     _audioSource.clip = _laserAudioClip;
     _audioSource.Play();
-
-    // _laserAudioSource.Play();
-    // if (_laserAudioSource == null)
-    // {
-    //   Debug.LogError("laser audio source was null in player firelaser, weird!");
-    // }
   }
 
-  private void OnTriggerEnter2D(Collider2D other)
-  {
-    // TODO: was attempting to try to only damage ship once even when the two
-    // enemy lasers hit the ship, for some reason this never triggers. Even when
-    // turning off box colliders and rigidbodies on child laser and enabling both
-    // on the parent object...
-    if (other.tag == "EnemyLaser")
-    {
-      Debug.Log("Player collided with: " + other.tag);
-      // Laser laser = other.GetComponent<Laser>();
-      // if (laser != null && laser.IsEnemyLaser)
-      // {
-      //   Damage();
-      // }
-      Damage();
-    }
-  }
+  // TODO: my first attempt to try to only damage ship once even when the two
+  // enemy lasers hit the ship, for some reason this never triggers. Even when
+  // turning off box colliders and rigidbodies on child laser and enabling both
+  // on the parent object...
+  // private void OnTriggerEnter2D(Collider2D other)
+  // {
+  //   
+  //   if (other.tag == "EnemyLaser")
+  //   {
+  //     Damage();
+  //   }
+  // }
 
   public void Damage()
   {
-    Debug.Log("Player damaged.");
     if (_areShieldsActive)
     {
       _areShieldsActive = false;
@@ -190,8 +160,8 @@ public class Player : MonoBehaviour
       System.Random random = new System.Random();
       int randomIndex = random.Next(_damageObjects.Count);
       _damageObjects[randomIndex].SetActive(true);
-      // TODO: this precludes gaining health so change this is that becomes a feature.
-      _damageObjects.RemoveAt(randomIndex); // Prevent it from being enabled again .
+      // TODO: this precludes gaining health so change this if that becomes a feature.
+      _damageObjects.RemoveAt(randomIndex); // Prevent it from being enabled again.
     }
     
     _lives--;
@@ -199,14 +169,10 @@ public class Player : MonoBehaviour
 
     if (_lives < 1)
     {
-      Debug.Log("Player death");
-      // TODO: this still leaves the damage and the thruster still visible, can I recursively loop through child
-      // objects to destroy or disable them like this?
-      // _renderer.enabled = false;
-      // This below helped with powerups sound on destroy, but doing this causes restart menu not to load...
-      // AudioSource.PlayClipAtPoint(_explosionAudioClip, transform.position);
+      AudioSource.PlayClipAtPoint(_explosionAudioClip, transform.position);
       _spawnManager.OnPlayerDeath();
-      Destroy(this.gameObject, _audioSource.clip.length);
+      // Subtracting otherwise player hangs around for a bit too long before being destroyed.
+      Destroy(this.gameObject, _explosionAudioClip.length - 2.0f);
     }
   }
 
