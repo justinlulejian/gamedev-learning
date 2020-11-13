@@ -108,7 +108,7 @@ public class Player : MonoBehaviour
     float verticalInput = Input.GetAxis("Vertical");
 
     Vector3 direction = new Vector3(horizontalInput, verticalInput, 0);
-    transform.Translate(direction * _speed * Time.deltaTime);
+    transform.Translate(direction * (_speed * Time.deltaTime));
 
     // Enforce minimum player bound on y to -3.8f.
     transform.position = new Vector3(
@@ -138,6 +138,7 @@ public class Player : MonoBehaviour
         _laserPrefab,
         transform.position + new Vector3(0, 1.05f, 0), Quaternion.identity);
     }
+    
 
     // TODO: triple shot is higher volume and sounds a little off possible because it plays x3?
     // Is it possible for Tripleshot to just play the sound once but just amp the volume?
@@ -153,6 +154,24 @@ public class Player : MonoBehaviour
     // {
     //   Debug.LogError("laser audio source was null in player firelaser, weird!");
     // }
+  }
+
+  private void OnTriggerEnter2D(Collider2D other)
+  {
+    // TODO: was attempting to try to only damage ship once even when the two
+    // enemy lasers hit the ship, for some reason this never triggers. Even when
+    // turning off box colliders and rigidbodies on child laser and enabling both
+    // on the parent object...
+    if (other.tag == "EnemyLaser")
+    {
+      Debug.Log("Player collided with: " + other.tag);
+      // Laser laser = other.GetComponent<Laser>();
+      // if (laser != null && laser.IsEnemyLaser)
+      // {
+      //   Damage();
+      // }
+      Damage();
+    }
   }
 
   public void Damage()

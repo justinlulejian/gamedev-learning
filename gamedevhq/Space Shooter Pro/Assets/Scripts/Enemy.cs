@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -9,6 +10,8 @@ public class Enemy : MonoBehaviour
   
   [SerializeField]
   private GameObject _laserPrefab;
+  private float _canFire = -1f;
+  private float _fireRate = 3.0f;
   
   [SerializeField]
   private float _speed = 4f;
@@ -26,7 +29,7 @@ public class Enemy : MonoBehaviour
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
 
-    StartCoroutine(FireLasers());
+    // StartCoroutine(FireLasers());
 
     if (!_player)
     {
@@ -50,8 +53,13 @@ public class Enemy : MonoBehaviour
 
   void Update()
   {
-   
-    Vector3 moveShip = Vector3.down * _speed * Time.deltaTime;
+    CalculateMovement();
+    FireLasers();
+  }
+
+  private void CalculateMovement()
+  {
+    Vector3 moveShip = Vector3.down * (_speed * Time.deltaTime);
     transform.Translate(moveShip);
 
     if (transform.position.y <= -5f)
@@ -59,7 +67,21 @@ public class Enemy : MonoBehaviour
       float randomX = Random.Range(-8f, 8f);
       transform.position = new Vector3(randomX, 7, 0);
     }
+  }
 
+  private void FireLasers()
+  {
+    if (Time.time > _canFire)
+    {
+      _fireRate = Random.Range(3f, 7f);
+      _canFire = Time.time + _fireRate;
+      GameObject enemyLaser = Instantiate(_laserPrefab, transform.position, Quaternion.identity);
+      Laser[] lasers = enemyLaser.GetComponentsInChildren<Laser>();
+      foreach (var laser in lasers)
+      {
+        laser.IsEnemyLaser = true;
+      }
+    }
   }
 
   private void OnTriggerEnter2D(Collider2D other)
@@ -82,6 +104,13 @@ public class Enemy : MonoBehaviour
       
     } else if (other.tag == "Laser")
     {
+      Laser laser = other.GetComponent<Laser>();
+      if (laser != null)
+      {
+        // Do not let other enemy lasers destroy other enemies.
+        if (laser.IsEnemyLaser)
+          return;
+      }
       Destroy(other.gameObject);
       if (_player)
       {
@@ -96,17 +125,19 @@ public class Enemy : MonoBehaviour
     }
   }
   
-  private IEnumerator FireLasers()
-  {
-    // TODO: randomize 3-7 seconds
-    yield return new WaitForSeconds(3f);
-    GameObject laserObj = Instantiate(
-      _laserPrefab,
-      transform.position + new Vector3(0, 0, 0),
-      Quaternion.identity) as GameObject;
-    Laser laser = laserObj.GetComponent<Laser>();
-    laser.direction = Vector3.down;
-  }
+  // private IEnumerator FireLasers()
+  // {
+  //   // TODO: randomize 3-7 seconds
+  //   // yield return new WaitForSeconds(3f);
+  //   GameObject laserObj = Instantiate(
+  //     _laserPrefab,
+  //     transform.position + new Vector3(0, -3, 0),
+  //     Quaternion.identity) as GameObject;
+  //   Laser laser = laserObj.GetComponent<Laser>();
+  //   laser.direction = Vector3.down;
+  //   Debug.Log("Enemy laser created down.");
+  //   yield return new WaitForSeconds(0.1f);
+  // }
 
   private IEnumerator PlayDeathAnimationThenDestroy()
   {

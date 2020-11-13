@@ -23,8 +23,8 @@ public class Laser : MonoBehaviour
   //   }
   // }
 
-  public Vector3 direction;
-  
+  // public Vector3 direction = Vector3.up;
+
   // private AudioSource _audioSource;
 
   // private void Start()
@@ -40,10 +40,28 @@ public class Laser : MonoBehaviour
 
   void Update()
   {
-    transform.Translate(ddirection * (_speed * Time.deltaTime));
+    CalculateMovementAndOrDestroy();
+  }
 
-    if (transform.position.y > 8f)
+  private void CalculateMovementAndOrDestroy()
+  {
+    if (IsEnemyLaser)
     {
+      Move(Vector3.down);
+    }
+    else
+    {
+      Move(Vector3.up);
+    }
+  }
+
+  private void Move(Vector3 direction)
+  {
+    transform.Translate(direction * (_speed * Time.deltaTime));
+
+    if (transform.position.y > 8f || transform.position.y < -8f)
+    {
+      // Debug.Log("laser off screen so destroying.");
       // TODO: this is meant to destroy triple shots, but it seems if you spam it you can get a few
       // to remain in the scene and they should be getting deleted.
       if (transform.parent != null)
@@ -54,7 +72,22 @@ public class Laser : MonoBehaviour
     }
   }
 
-//   public void PlaySound()
+  public bool IsEnemyLaser { get; set; } = false;
+
+  // private void OnTriggerEnter2D(Collider2D other)
+  // {
+  //   if (other.tag == "Player" && IsEnemyLaser)
+  //   {
+  //     Player player = other.GetComponent<Player>();
+  //     if (player != null)
+  //     {
+  //       player.Damage();
+  //     }
+  //   }
+  // }
+
+
+  //   public void PlaySound()
 //   {
 //     if (_audioSource == null)
 //     {
