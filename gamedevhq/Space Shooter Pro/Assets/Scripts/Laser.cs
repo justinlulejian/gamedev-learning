@@ -9,8 +9,6 @@ public class Laser : MonoBehaviour
 {
   [SerializeField]
   private float _speed = 8.0f;
-
-  private void Update()
   {
     CalculateMovementAndOrDestroy();
   }
@@ -34,8 +32,29 @@ public class Laser : MonoBehaviour
       }
       Destroy(this.gameObject);
     }
-   
   }
 
   public bool IsEnemyLaser { get; set; } = false;
+
+  // private void OnTriggerEnter2D(Collider2D other)
+  // {
+  //   if (other.tag == "Player" && IsEnemyLaser)
+  //   {
+  //     Player player = other.GetComponent<Player>();
+  //     if (player != null)
+  //     {
+  //       player.Damage();
+  //     }
+  //   }
+  // }
+
+
+  //   public void PlaySound()
+//   {
+//     if (_audioSource == null)
+//     {
+//       Debug.LogError("laser audio source was null in laser playsound, weird!");
+//     }
+//     _audioSource.Play();
+//   }
 }
