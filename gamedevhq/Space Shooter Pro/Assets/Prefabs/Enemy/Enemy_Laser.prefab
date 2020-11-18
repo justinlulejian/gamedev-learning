@@ -91,7 +91,7 @@ PrefabInstance:
     - target: {fileID: 6688453021566434961, guid: 5b6ca788de60e714b927e1c3cb6e12cc,
         type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6688453021566434962, guid: 5b6ca788de60e714b927e1c3cb6e12cc,
         type: 3}
@@ -153,8 +153,7 @@ PrefabInstance:
       propertyPath: m_Name
       value: Laser_Left
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 6688453021566434960, guid: 5b6ca788de60e714b927e1c3cb6e12cc, type: 3}
+    m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5b6ca788de60e714b927e1c3cb6e12cc, type: 3}
 --- !u!4 &7693419787630615493 stripped
 Transform:
@@ -177,7 +176,7 @@ PrefabInstance:
     - target: {fileID: 6688453021566434961, guid: 5b6ca788de60e714b927e1c3cb6e12cc,
         type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6688453021566434962, guid: 5b6ca788de60e714b927e1c3cb6e12cc,
         type: 3}
@@ -254,8 +253,7 @@ PrefabInstance:
       propertyPath: m_Name
       value: Laser_Right
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 6688453021566434960, guid: 5b6ca788de60e714b927e1c3cb6e12cc, type: 3}
+    m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5b6ca788de60e714b927e1c3cb6e12cc, type: 3}
 --- !u!4 &7693419787690112328 stripped
 Transform:

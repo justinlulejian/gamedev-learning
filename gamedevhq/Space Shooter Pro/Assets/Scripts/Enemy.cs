@@ -29,8 +29,6 @@ public class Enemy : MonoBehaviour
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
 
-    // StartCoroutine(FireLasers());
-
     if (!_player)
     {
       Debug.LogError("Player is null from Enemy.");
@@ -95,7 +93,7 @@ public class Enemy : MonoBehaviour
       }
       _animator.SetTrigger("OnEnemyDeath");
       _speed = 0f;
-      // TODO: make this work in the future, at the moment it never gets to setting the animFinished
+      // TODO: make this work in the future, at the moment it never gets to setting animFinished
       // as true.
       // StartCoroutine("PlayDeathAnimationThenDestroy");
       _audioSource.Play();
@@ -125,60 +123,31 @@ public class Enemy : MonoBehaviour
     }
   }
   
-  // private IEnumerator FireLasers()
+  // TODO: This is a possible alternative way to play the death anim and destroy the
+  // object as soon as the animation finishes playing but it wasn't working.
+  // private IEnumerator PlayDeathAnimationThenDestroy()
   // {
-  //   // TODO: randomize 3-7 seconds
-  //   // yield return new WaitForSeconds(3f);
-  //   GameObject laserObj = Instantiate(
-  //     _laserPrefab,
-  //     transform.position + new Vector3(0, -3, 0),
-  //     Quaternion.identity) as GameObject;
-  //   Laser laser = laserObj.GetComponent<Laser>();
-  //   laser.direction = Vector3.down;
-  //   Debug.Log("Enemy laser created down.");
-  //   yield return new WaitForSeconds(0.1f);
+  //   this.gameObject.tag = "";
+  //   Debug.Log("Waiting for Death anim of enemy to finish.");
+  //   // yield return new WaitUntil(
+  //   //   () => _animator.GetCurrentAnimatorStateInfo(
+  //   //     0).normalizedTime > 1);
+  //   yield return new WaitUntil(DeathAnimationFinishedPlaying);
+  //   Debug.Log("Death anim for enemy finished playing. Destroying enemy.");
+  //   Destroy(this.gameObject);
   // }
-
-  private IEnumerator PlayDeathAnimationThenDestroy()
-  {
-    this.gameObject.tag = "";
-    Debug.Log("Waiting for Death anim of enemy to finish.");
-    // yield return new WaitUntil(
-    //   () => _animator.GetCurrentAnimatorStateInfo(
-    //     0).normalizedTime > 1);
-    yield return new WaitUntil(DeathAnimationFinishedPlaying);
-    Debug.Log("Death anim for enemy finished playing. Destroying enemy.");
-    Destroy(this.gameObject);
-  }
-
-  private bool DeathAnimationFinishedPlaying()
-  {
-    bool animFinished = false;
-    for (int i = 0; i < _animator.layerCount; i++)
-    {
-      AnimatorStateInfo animState = _animator.GetCurrentAnimatorStateInfo(i);
-      if (animState.IsName("OnDeathPlaying") && animState.normalizedTime >= 1.0f)
-      {
-        animFinished = true;
-      }
-    }
-    return animFinished;
-  }
-
-  private IEnumerator PlayDestroyedSound()
-  {
-    if (!_audioSource.isPlaying)
-    {
-      _audioSource.Play();
-      yield return new WaitForSeconds(3.0f);
-    }
-  }
-
-  private void OnDestroy()
-  {
-    // TODO: this doesn't work, enemy just immediately disappears. I'm doing this since
-    // SpawnManager.OnPlayerDeath loops and destroys all the enemy's on screen bypassing
-    // the explosion audio playing when we collide with laser or player...
-    // StartCoroutine(PlayDestroyedSound());
-  }
+  //
+  // private bool DeathAnimationFinishedPlaying()
+  // {
+  //   bool animFinished = false;
+  //   for (int i = 0; i < _animator.layerCount; i++)
+  //   {
+  //     AnimatorStateInfo animState = _animator.GetCurrentAnimatorStateInfo(i);
+  //     if (animState.IsName("OnDeathPlaying") && animState.normalizedTime >= 1.0f)
+  //     {
+  //       animFinished = true;
+  //     }
+  //   }
+  //   return animFinished;
+  // }
 }

@@ -44,21 +44,16 @@ public class Powerup : MonoBehaviour
         {
           case 0:
             player.TripleShotActive();
-            Debug.Log("Collected triple shot powerup");
             break;
           case 1:
             player.SpeedBoostPowerupActive();
-            Debug.Log("Collected speed powerup");
             break;
           case 2:
             player.ShieldsPowerupActive();
-            Debug.Log("Collected shield powerup");
             break;
           default:
-            Debug.Log("Collected a powerup with an unknown ID:" + _powerupID);
             break;
         }
-        Debug.Log("playing power up sound");
       }
       Destroy(this.gameObject);
     }
