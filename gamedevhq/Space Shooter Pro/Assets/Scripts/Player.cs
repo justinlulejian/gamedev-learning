@@ -27,9 +27,12 @@ public class Player : MonoBehaviour
   private bool _isSpeedBoostActive = false;
   [SerializeField]
   private bool _areShieldsActive = false;
+  private int _shieldStrength = 0;
 
   [SerializeField] 
   private GameObject _shieldsPrefab;
+
+  private SpriteRenderer _shieldsRenderer;
 
   [SerializeField]
   private GameObject _leftEngineDamage;
@@ -61,7 +64,8 @@ public class Player : MonoBehaviour
     _damageObjects = new List<GameObject>{_leftEngineDamage, _rightEngineDamage};
     _renderer = GetComponent<Renderer>();
     _renderer.enabled = true;
-    
+    _shieldsRenderer = _shieldsPrefab.GetComponent<SpriteRenderer>();
+   
     transform.position = new Vector3(0, 0, 0);
     
     if (_spawnManager == null)
@@ -80,6 +84,9 @@ public class Player : MonoBehaviour
     {
       Debug.LogError("_renderer was null when creating player");
     }
+    if (_shieldsRenderer == null) {
+      Debug.LogError("Sprite renderer on player shield prefab is null.");
+    }
   }
 
   private void Update()
@@ -97,7 +104,7 @@ public class Player : MonoBehaviour
     float verticalInput = Input.GetAxis("Vertical");
 
     Vector3 direction = new Vector3(horizontalInput, verticalInput, 0);
-    transform.Translate(direction * (_speed * speedMultiplier) * Time.deltaTime);
+    transform.Translate(direction * (_speed * speedMultiplier * Time.deltaTime));
 
     // Enforce minimum player bound on y to -3.8f.
     transform.position = new Vector3(
@@ -150,52 +157,56 @@ public class Player : MonoBehaviour
     // if (other.tag == "EnemyLaser")
     if (other.tag == "Laser")
     {
-      Debug.Log("Player collided with: " + other.tag);
       Laser laser = other.GetComponent<Laser>();
       if (laser != null && laser.IsEnemyLaser)
       {
-        Debug.Log("laser damaged player");
         Damage();
       }
-      // Damage();
     } 
   }
 
-    public void Damage()
+  public void Damage()
+  {
+    if (_areShieldsActive)
     {
-      Debug.Log("Player damaged.");
-      if (_areShieldsActive)
+      DamageShields();
+      return;
+    }
+
+    // Randomly select one of the damages to enable if lives > 1, otherwise skip
+    if (_lives > 1)
+    {
+      System.Random random = new System.Random();
+      int randomIndex = random.Next(_damageObjects.Count);
+      _damageObjects[randomIndex].SetActive(true);
+      // This precludes gaining health so change this if that becomes a feature.
+      _damageObjects.RemoveAt(randomIndex); // Prevent it from being enabled again.
+    }
+
+    _lives--;
+    _uiManager.UpdateLives(_lives);
+
+    if (_lives < 1)
+    {
+      _spawnManager.OnPlayerDeath();
+      Destroy(this.gameObject, _audioSource.clip.length);
+    }
+  }
+    
+    private void DamageShields() {
+      _shieldStrength--;
+      if (_shieldStrength == 0)
       {
         _areShieldsActive = false;
         _shieldsPrefab.SetActive(false);
         return;
       }
-
-      // Randomly select one of the damages to enable if lives > 1, otherwise skip
-      if (_lives > 1)
-      {
-        System.Random random = new System.Random();
-        int randomIndex = random.Next(_damageObjects.Count);
-        _damageObjects[randomIndex].SetActive(true);
-        // TODO: this precludes gaining health so change this if that becomes a feature.
-        _damageObjects.RemoveAt(randomIndex); // Prevent it from being enabled again .
-      }
-
-      _lives--;
-      _uiManager.UpdateLives(_lives);
-      Debug.Log("Update lives");
-
-      if (_lives < 1)
-      {
-        Debug.Log("Player death");
-        // TODO: this still leaves the damage and the thruster still visible, can I recursively loop through child
-        // objects to destroy or disable them like this?
-        // _renderer.enabled = false;
-        // This below helped with powerups sound on destroy, but doing this causes restart menu not to load...
-        // AudioSource.PlayClipAtPoint(_explosionAudioClip, transform.position);
-        _spawnManager.OnPlayerDeath();
-        Destroy(this.gameObject, _audioSource.clip.length);
-      }
+      // Shields can take three hits, then they disappear.
+      Color shieldColor = _shieldsRenderer.color;
+      shieldColor = new Color(
+        shieldColor.r, shieldColor.g, shieldColor.b,
+        shieldColor.a - (shieldColor.maxColorComponent / 3.0f));
+      _shieldsRenderer.color = shieldColor;
     }
 
     public void TripleShotActive()
@@ -226,6 +237,9 @@ public class Player : MonoBehaviour
 
     public void ShieldsPowerupActive()
     {
+      _shieldStrength = 3;
+      _shieldsRenderer.color = new Color(_shieldsRenderer.color.r, _shieldsRenderer.color.g, _shieldsRenderer.color.b,
+        _shieldsRenderer.color.maxColorComponent);
       _areShieldsActive = true;
       _shieldsPrefab.SetActive(true);
     }

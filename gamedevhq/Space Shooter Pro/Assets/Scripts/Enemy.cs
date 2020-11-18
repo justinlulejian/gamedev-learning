@@ -72,6 +72,8 @@ public class Enemy : MonoBehaviour
 
   private void FireLasers()
   {
+    // TODO(bug): lasers can still fire during/after the death animation, we should check for
+    // that start of that animation and not proceed with firing.
     if (Time.time > _canFire)
     {
       _fireRate = Random.Range(3f, 7f);
@@ -99,7 +101,10 @@ public class Enemy : MonoBehaviour
       // TODO: make this work in the future, at the moment it never gets to setting animFinished
       // as true.
       // StartCoroutine("PlayDeathAnimationThenDestroy");
-      _audioSource.Play();
+      if (_audioSource.enabled)
+      {
+        _audioSource.Play();
+      }
       Destroy(GetComponent<Collider2D>());
       Destroy(this.gameObject, 2.8f);
       

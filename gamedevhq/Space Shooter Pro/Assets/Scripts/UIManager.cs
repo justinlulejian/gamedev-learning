@@ -37,7 +37,14 @@ public class UIManager : MonoBehaviour
 
     public void UpdateLives(int currentLives)
     {
-        _livesImage.sprite = _liveSprites[currentLives];
+        if (currentLives >= 0)
+        { 
+            _livesImage.sprite = _liveSprites[currentLives];
+        }
+        else  // Prevent damage beyond current lives causing us to go out of range of index.
+        {
+            _livesImage.sprite = _liveSprites[0];
+        }
 
         if (currentLives < 1)
         {
