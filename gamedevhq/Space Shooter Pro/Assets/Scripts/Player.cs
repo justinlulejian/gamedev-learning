@@ -82,22 +82,22 @@ public class Player : MonoBehaviour
     }
   }
 
-  void Update()
+  private void Update()
   {
-    CalculateMovement();
+    CalculateMovement(Input.GetKey(KeyCode.LeftShift) ? _speedMultipler : 1);
     if (Input.GetKeyDown(KeyCode.Space) && Time.time > _canFire)
     {
       FireLaser();
     }
   }
 
-  private void CalculateMovement()
+  private void CalculateMovement(float speedMultiplier = 1)
   {
     float horizontalInput = Input.GetAxis("Horizontal");
     float verticalInput = Input.GetAxis("Vertical");
 
     Vector3 direction = new Vector3(horizontalInput, verticalInput, 0);
-    transform.Translate(direction * (_speed * Time.deltaTime));
+    transform.Translate(direction * (_speed * speedMultiplier) * Time.deltaTime);
 
     // Enforce minimum player bound on y to -3.8f.
     transform.position = new Vector3(
