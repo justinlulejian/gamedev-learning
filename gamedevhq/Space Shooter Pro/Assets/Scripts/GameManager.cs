@@ -17,6 +17,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public bool IsGameOver => _isGameOver;
+
     public void GameOver()
     {
         _isGameOver = true;

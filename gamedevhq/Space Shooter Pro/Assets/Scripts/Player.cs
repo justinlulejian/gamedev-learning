@@ -49,6 +49,9 @@ public class Player : MonoBehaviour
 
   [SerializeField] 
   private int _score;
+
+  [SerializeField] 
+  private int _ammoCount;
   
   [SerializeField]
   private UIManager _uiManager;
@@ -124,6 +127,10 @@ public class Player : MonoBehaviour
   void FireLaser()
   {
     _canFire = Time.time + _fireRate;
+    if (_ammoCount < 1)
+    {
+      return;
+    }
     if (_isTripleShotActive)
     {
       Instantiate(_tripleShotPrefab, transform.position, Quaternion.identity);
@@ -135,12 +142,13 @@ public class Player : MonoBehaviour
         transform.position + new Vector3(0, 1.05f, 0), Quaternion.identity);
     }
 
+    ReduceAmmoCount();
 
     // TODO: triple shot is higher volume and sounds a little off possible because it plays x3?
     // Is it possible for Tripleshot to just play the sound once but just amp the volume?
     if (_audioSource == null)
     {
-      Debug.LogError("_audioSource was null in player firelaser, weird!");
+      Debug.LogError("_audioSource was null in Player FireLaser.");
     }
 
     _audioSource.clip = _laserAudioClip;
@@ -253,6 +261,17 @@ public class Player : MonoBehaviour
     {
       _score += points;
       _uiManager.UpdateScore(_score);
+    }
+
+    public int GetAmmoCount()
+    {
+      return _ammoCount;
+    }
+    
+    private void ReduceAmmoCount()
+    {
+      _ammoCount--;
+      _uiManager.UpdateAmmoCount(_ammoCount);
     }
     
 }
