@@ -184,11 +184,7 @@ public class Player : MonoBehaviour
     // Randomly select one of the damages to enable if lives > 1, otherwise skip
     if (_lives > 1)
     {
-      System.Random random = new System.Random();
-      int randomIndex = random.Next(_damageObjects.Count);
-      _damageObjects[randomIndex].SetActive(true);
-      // This precludes gaining health so change this if that becomes a feature.
-      _damageObjects.RemoveAt(randomIndex); // Prevent it from being enabled again.
+      ShowDamage();
     }
 
     _lives--;
@@ -200,85 +196,124 @@ public class Player : MonoBehaviour
       Destroy(this.gameObject, _audioSource.clip.length);
     }
   }
-    
-    private void DamageShields() {
-      _shieldStrength--;
-      if (_shieldStrength == 0)
+
+  // 
+  private void DamagePrefab(bool enable)
+  {
+    System.Random random = new System.Random();
+    bool damagePrefabActionCompleted = false;
+    while (!damagePrefabActionCompleted)
+    {
+      int randomIndex = random.Next(_damageObjects.Count);
+      bool prefabActive = _damageObjects[randomIndex].activeSelf;
+      if (prefabActive != enable)
       {
-        _areShieldsActive = false;
-        _shieldsPrefab.SetActive(false);
-        return;
+        _damageObjects[randomIndex].SetActive(enable);
+        damagePrefabActionCompleted = true;
       }
-      // Shields can take three hits, then they disappear.
-      Color shieldColor = _shieldsRenderer.color;
-      shieldColor = new Color(
-        shieldColor.r, shieldColor.g, shieldColor.b,
-        shieldColor.a - (shieldColor.maxColorComponent / 3.0f));
-      _shieldsRenderer.color = shieldColor;
     }
+  }
+  private void ShowDamage()
+  {
+    DamagePrefab(true);
+  }
 
-    public void TripleShotActive()
-    {
-      _isTripleShotActive = true;
-      StartCoroutine(TripleShotPowerUpExpireRoutine());
-    }
-
-    private IEnumerator TripleShotPowerUpExpireRoutine()
-    {
-      yield return new WaitForSeconds(5f);
-      _isTripleShotActive = false;
-    }
-
-    public void SpeedBoostPowerupActive()
-    {
-      _speed *= _speedMultipler;
-      _isSpeedBoostActive = true;
-      StartCoroutine(SpeedBoostPowerupExpireRoutine());
-    }
-
-    public void CollectAmmo()
-    {
-      _ammoCount += 1;
-      _uiManager.UpdateAmmoCount(_ammoCount);
-    }
-
-    private IEnumerator SpeedBoostPowerupExpireRoutine()
-    {
-      yield return new WaitForSeconds(5f);
-      _speed /= _speedMultipler;
-      _isSpeedBoostActive = false;
-    }
-
-    public void ShieldsPowerupActive()
-    {
-      _shieldStrength = 3;
-      _shieldsRenderer.color = new Color(_shieldsRenderer.color.r, _shieldsRenderer.color.g, _shieldsRenderer.color.b,
-        _shieldsRenderer.color.maxColorComponent);
-      _areShieldsActive = true;
-      _shieldsPrefab.SetActive(true);
-    }
-
-    public int GetScore()
-    {
-      return _score;
-    }
-
-    public void AddToScore(int points)
-    {
-      _score += points;
-      _uiManager.UpdateScore(_score);
-    }
-
-    public int GetAmmoCount()
-    {
-      return _ammoCount;
-    }
+  private void RemoveDamage()
+  {
+    DamagePrefab(false);
+  }
     
-    private void ReduceAmmoCount()
+  private void DamageShields() {
+    _shieldStrength--;
+    if (_shieldStrength == 0)
     {
-      _ammoCount--;
-      _uiManager.UpdateAmmoCount(_ammoCount);
+      _areShieldsActive = false;
+      _shieldsPrefab.SetActive(false);
+      return;
     }
+    // Shields can take three hits, then they disappear.
+    Color shieldColor = _shieldsRenderer.color;
+    shieldColor = new Color(
+      shieldColor.r, shieldColor.g, shieldColor.b,
+      shieldColor.a - (shieldColor.maxColorComponent / 3.0f));
+    _shieldsRenderer.color = shieldColor;
+  }
+
+  public void TripleShotActive()
+  {
+    _isTripleShotActive = true;
+    StartCoroutine(TripleShotPowerUpExpireRoutine());
+  }
+
+  private IEnumerator TripleShotPowerUpExpireRoutine()
+  {
+    yield return new WaitForSeconds(5f);
+    _isTripleShotActive = false;
+  }
+
+  public void SpeedBoostPowerupActive()
+  {
+    _speed *= _speedMultipler;
+    _isSpeedBoostActive = true;
+    StartCoroutine(SpeedBoostPowerupExpireRoutine());
+  }
+
+  public void CollectAmmo()
+  {
+    _ammoCount += 1;
+    _uiManager.UpdateAmmoCount(_ammoCount);
+  }
+  
+  public void CollectLife()
+  {
+    _lives += 1;
+    RemoveDamage();
+    _uiManager.UpdateLives(_lives);
+  }
+
+  private IEnumerator SpeedBoostPowerupExpireRoutine()
+  {
+    yield return new WaitForSeconds(5f);
+    _speed /= _speedMultipler;
+    _isSpeedBoostActive = false;
+  }
+
+  public void ShieldsPowerupActive()
+  {
+    _shieldStrength = 3;
+    _shieldsRenderer.color = new Color(_shieldsRenderer.color.r, _shieldsRenderer.color.g, _shieldsRenderer.color.b,
+      _shieldsRenderer.color.maxColorComponent);
+    _areShieldsActive = true;
+    _shieldsPrefab.SetActive(true);
+  }
+
+  public int GetScore()
+  {
+    return _score;
+  }
+  
+  public int GetLives()
+  {
+    return _lives;
+  }
+
+
+  public void AddToScore(int points)
+  {
+    _score += points;
+    _uiManager.UpdateScore(_score);
+  }
+
+  public int GetAmmoCount()
+  {
+    return _ammoCount;
+  }
+  
+  private void ReduceAmmoCount()
+  {
+    _ammoCount--;
+    _uiManager.UpdateAmmoCount(_ammoCount);
+  }
     
 }
 

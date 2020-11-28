@@ -21,6 +21,7 @@ public class Powerup : MonoBehaviour
   // 1 == speed
   // 2 == shields
   // 3 == ammo collectable
+  // 4 == health collectable
   [SerializeField]
   private int _powerupID;
 
@@ -54,6 +55,12 @@ public class Powerup : MonoBehaviour
             break;
           case 3:
             player.CollectAmmo();
+            break;
+          case 4:
+            if (player.GetLives() < 3)  // Prevent increasing lives beyond maximum.
+            {
+              player.CollectLife();
+            }
             break;
           default:
             break;
