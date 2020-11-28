@@ -236,6 +236,12 @@ public class Player : MonoBehaviour
       StartCoroutine(SpeedBoostPowerupExpireRoutine());
     }
 
+    public void CollectAmmo()
+    {
+      _ammoCount += 1;
+      _uiManager.UpdateAmmoCount(_ammoCount);
+    }
+
     private IEnumerator SpeedBoostPowerupExpireRoutine()
     {
       yield return new WaitForSeconds(5f);

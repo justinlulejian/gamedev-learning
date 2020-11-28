@@ -1707,6 +1707,7 @@ MonoBehaviour:
   - {fileID: 4482390072554363317, guid: 9125f82b871c5364aa6ff4d5a354cdd7, type: 3}
   - {fileID: 1929016352519385081, guid: 94002eb5b7ed2d9468ad1adcdb6b8908, type: 3}
   - {fileID: 8557178925314242122, guid: 676d9fc3387ed3d4c8ec979b59116435, type: 3}
+  - {fileID: 3784937069146104167, guid: 1e578d51c4655004092c127444869de1, type: 3}
   _stopSpawning: 0
 --- !u!1 &1983934739
 GameObject:
