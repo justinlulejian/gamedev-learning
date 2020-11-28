@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 
@@ -17,6 +18,7 @@ public class Player : MonoBehaviour
   [SerializeField]
   private float _fireRate = 0.15f;
   private float _canFire = -1f;
+  private float _decrementThruster = 5f;
   [SerializeField]
   private int _lives = 3;
   private SpawnManager _spawnManager;
@@ -56,6 +58,9 @@ public class Player : MonoBehaviour
   [SerializeField]
   private UIManager _uiManager;
 
+  [SerializeField]
+  private MainCamera _mainCamera;
+
   private Renderer _renderer;
   
   void Start()
@@ -68,6 +73,7 @@ public class Player : MonoBehaviour
     _renderer = GetComponent<Renderer>();
     _renderer.enabled = true;
     _shieldsRenderer = _shieldsPrefab.GetComponent<SpriteRenderer>();
+    _mainCamera = GameObject.Find("Main Camera").GetComponent<MainCamera>();
    
     transform.position = new Vector3(0, 0, 0);
     
@@ -90,18 +96,52 @@ public class Player : MonoBehaviour
     if (_shieldsRenderer == null) {
       Debug.LogError("Sprite renderer on player shield prefab is null.");
     }
+    if (_mainCamera == null) {
+      Debug.LogError("Camera is null when creating player.");
+    }
   }
 
   private void Update()
   {
-    CalculateMovement(Input.GetKey(KeyCode.LeftShift) ? _speedMultipler : 1);
+    // Debug.Log("_decrementThruster start: " + _decrementThruster);
+    if (Input.GetKey(KeyCode.LeftShift))
+    {
+      CalculateMovement(_speedMultipler);
+      
+      // if (Mathf.Approximately(0f,_decrementThruster % 1f) )
+      if (_decrementThruster > 0f)
+      {
+        _uiManager.SetThrusterBarOrCoolDown(_decrementThruster);
+        _decrementThruster -= Time.deltaTime;
+        // Debug.Log("_decrementThruster reduced: " + _decrementThruster);
+        // _decrementThruster = Mathf.Clamp(_decrementThruster + Time.deltaTime, 0f, 7f);
+      }
+      
+    }
+    else
+    {
+      CalculateMovement(1f);
+      // if (_decrementThruster < 5f)
+      // {
+      //   _decrementThruster += Time.deltaTime;
+      //   Debug.Log("_decrementThruster increased: " + _decrementThruster);
+      //   // _decrementThruster = Mathf.Clamp(_decrementThruster + Time.deltaTime, -2f, 5f);
+      // }
+      // _uiManager.SetThrusterBarOrCoolDown(_decrementThruster);
+    }
+    
     if (Input.GetKeyDown(KeyCode.Space) && Time.time > _canFire)
     {
       FireLaser();
     }
   }
 
-  private void CalculateMovement(float speedMultiplier = 1)
+  public void RestoreThrusterBar()
+  {
+    _decrementThruster = 5f;
+  }
+
+  private void CalculateMovement(float speedMultiplier)
   {
     float horizontalInput = Input.GetAxis("Horizontal");
     float verticalInput = Input.GetAxis("Vertical");
@@ -186,7 +226,9 @@ public class Player : MonoBehaviour
     {
       ShowDamage();
     }
-
+    
+    _mainCamera.ShakeCamera(2f);
+    
     _lives--;
     _uiManager.UpdateLives(_lives);
 

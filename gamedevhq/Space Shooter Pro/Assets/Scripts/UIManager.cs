@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,6 +18,12 @@ public class UIManager : MonoBehaviour
     private Image _livesImage;
     [SerializeField]
     private Sprite[] _liveSprites;
+    [SerializeField] 
+    private GameObject _thrusterBar;
+
+    private GameObject _thrusterBarFill;
+
+    private Slider _thrusterBarSlider;
 
     private GameManager _gameManager;
     private Player _player;
@@ -28,6 +35,8 @@ public class UIManager : MonoBehaviour
         _gameOverText.gameObject.SetActive(false);
         _gameManager = GameObject.Find("Game_Manager").GetComponent<GameManager>();
         _player = GameObject.Find("Player").GetComponent<Player>();
+        _thrusterBarSlider = _thrusterBar.GetComponent<Slider>();
+        _thrusterBarFill = GameObject.FindWithTag("ThrusterBarFill");
         
         if (_gameManager == null)
         {
@@ -40,6 +49,14 @@ public class UIManager : MonoBehaviour
         else
         {
             Debug.LogError("Couldn't find Player from UIManager");
+        }
+        if (_thrusterBarSlider == null)
+        {
+            Debug.LogError("Couldn't find thrusterBar slider from UIManager");
+        }
+        if (_thrusterBarFill == null)
+        {
+            Debug.LogError("Couldn't find thrusterBar fill from UIManager");
         }
     }
 
@@ -95,17 +112,66 @@ public class UIManager : MonoBehaviour
             _gameManager.GameOver();
         }
     }
+    
+    public void SetThrusterBar(float keyHoldDownRemaining)
+    {
+        float percentThrusterRemaining = keyHoldDownRemaining / 5f;
+        _thrusterBarSlider.value = _thrusterBarSlider.value * percentThrusterRemaining;
+    }
+
+    public void SetThrusterBarOrCoolDown(float keyHoldDownRemaining)
+    {
+        if (_thrusterBarSlider.value > 0f)
+        {
+            SetThrusterBar(keyHoldDownRemaining);
+        // TODO: Have to hold down shift for multiple seconds after bar looks empty for this to trigger?
+        } else if (Mathf.Approximately(_thrusterBarSlider.value, _thrusterBarSlider.minValue))
+        {
+            ThrusterBarCooldown();
+            // _player.RestoreThrusterBar();
+        }
+    }
+    
+    private void ThrusterBarCooldown()
+    {
+        StartCoroutine(ThrusterBarFlickerRoutine());
+        StartCoroutine(ThrusterBarRestore());
+    }
+    
+    private IEnumerator ThrusterBarFlickerRoutine()
+    {
+        while (_thrusterBarSlider.value < 1f && !(
+            Mathf.Approximately(_thrusterBarSlider.value, _thrusterBarSlider.maxValue)))
+        { 
+            _thrusterBarFill.SetActive(false);
+            yield return new WaitForSeconds(0.1f);
+            _thrusterBarFill.SetActive(true);
+            yield return new WaitForSeconds(0.1f);
+        }
+        _thrusterBarFill.SetActive(true);
+    }
+    
+    // This waits 3 seconds, then restores the Thruster bar in 5 seconds as a cooldown.
+    private IEnumerator ThrusterBarRestore()
+    {
+        yield return new WaitForSeconds(1f);
+        while (!(Mathf.Approximately(_thrusterBarSlider.value, _thrusterBarSlider.maxValue)))
+        {
+            yield return new WaitForSeconds(1f);
+            _thrusterBarSlider.value += .2f;
+        }
+    }
 
     private IEnumerator GameOverFlickerRoutine()
-        {
-            while (true)
-            { 
-                _gameOverText.gameObject.SetActive(false);
-                yield return new WaitForSeconds(0.5f);
-                _gameOverText.gameObject.SetActive(true);
-                yield return new WaitForSeconds(0.5f);
-            }
+    {
+        while (true)
+        { 
+            _gameOverText.gameObject.SetActive(false);
+            yield return new WaitForSeconds(0.5f);
+            _gameOverText.gameObject.SetActive(true);
+            yield return new WaitForSeconds(0.5f);
         }
+    }
     
    
 }
