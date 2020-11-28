@@ -12,6 +12,7 @@ public class Enemy : MonoBehaviour
   private GameObject _laserPrefab;
   private float _canFire = -1f;
   private float _fireRate = 3.0f;
+  private bool _defeated = false;
   
   [SerializeField]
   private float _speed = 4f;
@@ -74,7 +75,7 @@ public class Enemy : MonoBehaviour
   {
     // TODO(bug): lasers can still fire during/after the death animation, we should check for
     // that start of that animation and not proceed with firing.
-    if (Time.time > _canFire)
+    if (!_defeated && Time.time > _canFire)
     {
       _fireRate = Random.Range(3f, 7f);
       _canFire = Time.time + _fireRate;
@@ -96,18 +97,7 @@ public class Enemy : MonoBehaviour
       {
         player.Damage();
       }
-      _animator.SetTrigger("OnEnemyDeath");
-      _speed = 0f;
-      // TODO: make this work in the future, at the moment it never gets to setting animFinished
-      // as true.
-      // StartCoroutine("PlayDeathAnimationThenDestroy");
-      if (_audioSource.enabled)
-      {
-        _audioSource.Play();
-      }
-      Destroy(GetComponent<Collider2D>());
-      Destroy(this.gameObject, 2.8f);
-      
+      DestroyEnemy();
     } else if (other.CompareTag("Laser"))
     {
       Laser laser = other.GetComponent<Laser>();
@@ -122,13 +112,25 @@ public class Enemy : MonoBehaviour
       {
         _player.AddToScore(10);
       }
-      _animator.SetTrigger("OnEnemyDeath");
-      _speed = 0f;
-      // StartCoroutine("PlayDeathAnimationThenDestroy");
-      _audioSource.Play();
-      Destroy(GetComponent<Collider2D>());
-      Destroy(this.gameObject, 3.1f);
+
+      DestroyEnemy();
     }
+  }
+
+  private void DestroyEnemy()
+  {
+    _animator.SetTrigger("OnEnemyDeath");
+    _defeated = true;
+    _speed = 0f;
+    // TODO: try to make this work in the future, at the moment it never gets to setting animFinished
+    // as true.
+    // StartCoroutine("PlayDeathAnimationThenDestroy");
+    if (_audioSource.enabled)
+    {
+      _audioSource.Play();
+    }
+    Destroy(GetComponent<Collider2D>());
+    Destroy(this.gameObject, 2.8f);
   }
   
   // TODO: This is a possible alternative way to play the death anim and destroy the
