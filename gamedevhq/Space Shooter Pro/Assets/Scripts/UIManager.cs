@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,10 +18,10 @@ public class UIManager : MonoBehaviour
     private Sprite[] _liveSprites;
     [SerializeField] 
     private GameObject _thrusterBar;
-
-    private GameObject _thrusterBarFill;
-
-    private Slider _thrusterBarSlider;
+    private GameObject _thrusterBarFill;  // Object that fills the bar with a color.
+    private Slider _thrusterBarSlider;  // Controls how filled the bar is with the color.
+    // Whether thruster bar is restoring, controls player's ability to use thrusters.
+    private bool _thrusterRestoring = false;
 
     private GameManager _gameManager;
     private Player _player;
@@ -112,23 +110,29 @@ public class UIManager : MonoBehaviour
             _gameManager.GameOver();
         }
     }
-    
-    public void SetThrusterBar(float keyHoldDownRemaining)
+
+    public bool IsThrusterBarRestoring()
     {
-        float percentThrusterRemaining = keyHoldDownRemaining / 5f;
-        _thrusterBarSlider.value = _thrusterBarSlider.value * percentThrusterRemaining;
+        return _thrusterRestoring;
+    }
+    
+    public void SetThrusterBarValue(float thrusterTimeRemaining)
+    {
+        float percentThrusterRemaining = thrusterTimeRemaining / _player.GetThrusterTimeSeconds();
+        _thrusterBarSlider.value = _thrusterBarSlider.maxValue * percentThrusterRemaining;
     }
 
-    public void SetThrusterBarOrCoolDown(float keyHoldDownRemaining)
+    public void InitiateThrusterCooldown()
     {
-        if (_thrusterBarSlider.value > 0f)
+        // TODO(Improvement): This check is necessary to prevent the cooldown coroutines from being
+        // called on every Update() loop. Possible to do it in a simpler way?
+        if (!_thrusterRestoring)
         {
-            SetThrusterBar(keyHoldDownRemaining);
-        // TODO: Have to hold down shift for multiple seconds after bar looks empty for this to trigger?
-        } else if (Mathf.Approximately(_thrusterBarSlider.value, _thrusterBarSlider.minValue))
-        {
+            _thrusterRestoring = true;
+            // Clamp the value to 0f max in case we undershoot into a negative float value.
+            _thrusterBarSlider.value = Mathf.Clamp(
+                _thrusterBarSlider.value, _thrusterBarSlider.minValue, _thrusterBarSlider.maxValue);
             ThrusterBarCooldown();
-            // _player.RestoreThrusterBar();
         }
     }
     
@@ -140,26 +144,28 @@ public class UIManager : MonoBehaviour
     
     private IEnumerator ThrusterBarFlickerRoutine()
     {
-        while (_thrusterBarSlider.value < 1f && !(
-            Mathf.Approximately(_thrusterBarSlider.value, _thrusterBarSlider.maxValue)))
+        while (_thrusterRestoring)
         { 
             _thrusterBarFill.SetActive(false);
             yield return new WaitForSeconds(0.1f);
             _thrusterBarFill.SetActive(true);
             yield return new WaitForSeconds(0.1f);
         }
-        _thrusterBarFill.SetActive(true);
     }
     
-    // This waits 3 seconds, then restores the Thruster bar in 5 seconds as a cooldown.
+    // This restores the Thruster bar in 5 seconds as a cooldown.
     private IEnumerator ThrusterBarRestore()
     {
-        yield return new WaitForSeconds(1f);
         while (!(Mathf.Approximately(_thrusterBarSlider.value, _thrusterBarSlider.maxValue)))
         {
             yield return new WaitForSeconds(1f);
             _thrusterBarSlider.value += .2f;
         }
+        // Clamp the value to 1f max in case we overshoot.
+        _thrusterBarSlider.value = Mathf.Clamp(
+            _thrusterBarSlider.value, _thrusterBarSlider.minValue, _thrusterBarSlider.maxValue); 
+        _thrusterRestoring = false;
+        _player.RestoreThrusterTime();
     }
 
     private IEnumerator GameOverFlickerRoutine()

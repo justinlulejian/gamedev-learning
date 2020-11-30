@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 
@@ -18,7 +15,10 @@ public class Player : MonoBehaviour
   [SerializeField]
   private float _fireRate = 0.15f;
   private float _canFire = -1f;
-  private float _decrementThruster = 5f;
+  [SerializeField]
+  public float _thrusterTimeSeconds = 5f;  // Time in seconds that thruster can be used before cooldown.
+  private float _thrusterTimeSecondsRemaining;
+  public static float _minimumThrusterValue = .01f;  // Minimum value below which thrusters are considered disabled
   [SerializeField]
   private int _lives = 3;
   private SpawnManager _spawnManager;
@@ -76,6 +76,8 @@ public class Player : MonoBehaviour
     _mainCamera = GameObject.Find("Main Camera").GetComponent<MainCamera>();
    
     transform.position = new Vector3(0, 0, 0);
+
+    _thrusterTimeSecondsRemaining = _thrusterTimeSeconds;
     
     if (_spawnManager == null)
     {
@@ -103,31 +105,25 @@ public class Player : MonoBehaviour
 
   private void Update()
   {
-    // Debug.Log("_decrementThruster start: " + _decrementThruster);
-    if (Input.GetKey(KeyCode.LeftShift))
+    if (Input.GetKey(KeyCode.LeftShift) && !_uiManager.IsThrusterBarRestoring())
     {
       CalculateMovement(_speedMultipler);
-      
-      // if (Mathf.Approximately(0f,_decrementThruster % 1f) )
-      if (_decrementThruster > 0f)
+      // TODO(Improvement): Make thruster bigger when thrusting to give user visual feedback
+      // that thruster is going. Return to normal size when in cooldown.
+      if (_thrusterTimeSecondsRemaining > _minimumThrusterValue)
       {
-        _uiManager.SetThrusterBarOrCoolDown(_decrementThruster);
-        _decrementThruster -= Time.deltaTime;
-        // Debug.Log("_decrementThruster reduced: " + _decrementThruster);
-        // _decrementThruster = Mathf.Clamp(_decrementThruster + Time.deltaTime, 0f, 7f);
+        _uiManager.SetThrusterBarValue(_thrusterTimeSecondsRemaining);
+        _thrusterTimeSecondsRemaining -= Time.deltaTime;
+      }
+      else
+      {
+        _uiManager.InitiateThrusterCooldown();
       }
       
     }
     else
     {
       CalculateMovement(1f);
-      // if (_decrementThruster < 5f)
-      // {
-      //   _decrementThruster += Time.deltaTime;
-      //   Debug.Log("_decrementThruster increased: " + _decrementThruster);
-      //   // _decrementThruster = Mathf.Clamp(_decrementThruster + Time.deltaTime, -2f, 5f);
-      // }
-      // _uiManager.SetThrusterBarOrCoolDown(_decrementThruster);
     }
     
     if (Input.GetKeyDown(KeyCode.Space) && Time.time > _canFire)
@@ -136,9 +132,9 @@ public class Player : MonoBehaviour
     }
   }
 
-  public void RestoreThrusterBar()
+  public void RestoreThrusterTime()
   {
-    _decrementThruster = 5f;
+    _thrusterTimeSecondsRemaining = _thrusterTimeSeconds;
   }
 
   private void CalculateMovement(float speedMultiplier)
@@ -329,6 +325,11 @@ public class Player : MonoBehaviour
     _shieldsPrefab.SetActive(true);
   }
 
+  public float GetThrusterTimeSeconds()
+  {
+    return _thrusterTimeSeconds;
+  }
+  
   public int GetScore()
   {
     return _score;
