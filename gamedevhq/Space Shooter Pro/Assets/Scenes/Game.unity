@@ -1803,6 +1803,14 @@ MonoBehaviour:
   - {fileID: 8557178925314242122, guid: 676d9fc3387ed3d4c8ec979b59116435, type: 3}
   - {fileID: 3784937069146104167, guid: 1e578d51c4655004092c127444869de1, type: 3}
   - {fileID: 3962861844510630241, guid: d12352daa17e5a143a7df6c6a03aeef6, type: 3}
+  - {fileID: 7803426080503418360, guid: 6c6ad6fa4e8a3b24395e5a80af4be2b1, type: 3}
+  _powerUpWeights:
+  - 0.7
+  - 0.7
+  - 0.7
+  - 0.7
+  - 0.7
+  - 0.3
   _stopSpawning: 0
 --- !u!1 &1983934739
 GameObject:
@@ -1885,17 +1893,21 @@ MonoBehaviour:
     type: 3}
   _tripleShotPrefab: {fileID: 5635835603689145925, guid: de9660d251dce9546981c24bfd743376,
     type: 3}
+  _missilePrefab: {fileID: 7180029769896377581, guid: e02debadfc321ec4093a01c11e3b7dd3,
+    type: 3}
   _fireRate: 0.15
   _thrusterTimeSeconds: 5
   _lives: 3
   _isTripleShotActive: 0
   _isSpeedBoostActive: 0
+  _isMissleShotActive: 0
   _areShieldsActive: 0
   _shieldsPrefab: {fileID: 1377895524}
   _leftEngineDamage: {fileID: 2120173023}
   _rightEngineDamage: {fileID: 1294474231}
   _audioSource: {fileID: 2089662040}
   _laserAudioClip: {fileID: 8300000, guid: 75676f361bdfeaf41a46623e95df3dbc, type: 3}
+  _missileAudioClip: {fileID: 8300000, guid: 4f1ad1a2a4d33484db06895ac4295c80, type: 3}
   _explosionAudioClip: {fileID: 8300000, guid: a885c043fab7e46438bba03ba9dab6bc, type: 3}
   _score: 0
   _ammoCount: 15
@@ -1959,7 +1971,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2089662035}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.1, y: -0.27, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_Children:
   - {fileID: 1377895525}

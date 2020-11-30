@@ -22,6 +22,7 @@ public class Powerup : MonoBehaviour
   // 2 == shields
   // 3 == ammo collectable
   // 4 == health collectable
+  // 5 == missile
   [SerializeField]
   private int _powerupID;
 
@@ -61,6 +62,9 @@ public class Powerup : MonoBehaviour
             {
               player.CollectLife();
             }
+            break;
+          case 5:
+            player.MissilePowerupActive();
             break;
           default:
             break;
