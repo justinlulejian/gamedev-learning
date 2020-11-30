@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
+using CoroutineExtensionMethods;
 
 public class Player : MonoBehaviour
 
@@ -15,8 +14,14 @@ public class Player : MonoBehaviour
   [SerializeField]
   private GameObject _tripleShotPrefab;
   [SerializeField]
+  private GameObject _missilePrefab;
+  [SerializeField]
   private float _fireRate = 0.15f;
   private float _canFire = -1f;
+  [SerializeField]
+  public float _thrusterTimeSeconds = 5f;  // Time in seconds that thruster can be used before cooldown.
+  private float _thrusterTimeSecondsRemaining;
+  public static float _minimumThrusterValue = .01f;  // Minimum value below which thrusters are considered disabled
   [SerializeField]
   private int _lives = 3;
   private SpawnManager _spawnManager;
@@ -25,9 +30,14 @@ public class Player : MonoBehaviour
   private bool _isTripleShotActive = false;
   [SerializeField]
   private bool _isSpeedBoostActive = false;
+  [SerializeField] 
+  private bool _isMissleShotActive = false;
   [SerializeField]
   private bool _areShieldsActive = false;
   private int _shieldStrength = 0;
+  private Coroutine _tripleShotExpireCoroutine;
+  private Coroutine _missleExpireCoroutine;
+  private Coroutine _speedBoostExpireCoroutine;
 
   [SerializeField] 
   private GameObject _shieldsPrefab;
@@ -44,6 +54,8 @@ public class Player : MonoBehaviour
   private AudioSource _audioSource;
   [SerializeField]
   private AudioClip _laserAudioClip;
+  [SerializeField] 
+  private AudioClip _missileAudioClip;
   [SerializeField]
   private AudioClip _explosionAudioClip;
 
@@ -55,6 +67,9 @@ public class Player : MonoBehaviour
   
   [SerializeField]
   private UIManager _uiManager;
+
+  [SerializeField]
+  private MainCamera _mainCamera;
 
   private Renderer _renderer;
   
@@ -68,8 +83,11 @@ public class Player : MonoBehaviour
     _renderer = GetComponent<Renderer>();
     _renderer.enabled = true;
     _shieldsRenderer = _shieldsPrefab.GetComponent<SpriteRenderer>();
+    _mainCamera = GameObject.Find("Main Camera").GetComponent<MainCamera>();
    
     transform.position = new Vector3(0, 0, 0);
+
+    _thrusterTimeSecondsRemaining = _thrusterTimeSeconds;
     
     if (_spawnManager == null)
     {
@@ -90,18 +108,46 @@ public class Player : MonoBehaviour
     if (_shieldsRenderer == null) {
       Debug.LogError("Sprite renderer on player shield prefab is null.");
     }
+    if (_mainCamera == null) {
+      Debug.LogError("Camera is null when creating player.");
+    }
   }
 
   private void Update()
   {
-    CalculateMovement(Input.GetKey(KeyCode.LeftShift) ? _speedMultipler : 1);
+    if (Input.GetKey(KeyCode.LeftShift) && !_uiManager.IsThrusterBarRestoring())
+    {
+      CalculateMovement(_speedMultipler);
+      // TODO(Improvement): Make thruster bigger when thrusting to give user visual feedback
+      // that thruster is going. Return to normal size when in cooldown.
+      if (_thrusterTimeSecondsRemaining > _minimumThrusterValue)
+      {
+        _uiManager.SetThrusterBarValue(_thrusterTimeSecondsRemaining);
+        _thrusterTimeSecondsRemaining -= Time.deltaTime;
+      }
+      else
+      {
+        _uiManager.InitiateThrusterCooldown();
+      }
+      
+    }
+    else
+    {
+      CalculateMovement(1f);
+    }
+    
     if (Input.GetKeyDown(KeyCode.Space) && Time.time > _canFire)
     {
-      FireLaser();
+      FireWeapon();
     }
   }
 
-  private void CalculateMovement(float speedMultiplier = 1)
+  public void RestoreThrusterTime()
+  {
+    _thrusterTimeSecondsRemaining = _thrusterTimeSeconds;
+  }
+
+  private void CalculateMovement(float speedMultiplier)
   {
     float horizontalInput = Input.GetAxis("Horizontal");
     float verticalInput = Input.GetAxis("Vertical");
@@ -124,41 +170,49 @@ public class Player : MonoBehaviour
     }
   }
 
-  void FireLaser()
+  void FireWeapon()
   {
     _canFire = Time.time + _fireRate;
-    if (_ammoCount < 1)
-    {
-      return;
-    }
     if (_isTripleShotActive)
     {
-      Instantiate(_tripleShotPrefab, transform.position, Quaternion.identity);
-    }
-    else
+      InstantiatePrefabAndPlayAudioClip(_tripleShotPrefab, _laserAudioClip);
+      return;
+    } else if (_isMissleShotActive)
     {
-      Instantiate(
-        _laserPrefab,
-        transform.position + new Vector3(0, 1.05f, 0), Quaternion.identity);
+      InstantiatePrefabAndPlayAudioClip(
+        _missilePrefab, _missileAudioClip, positionOffset:new Vector3(0, 1f, 0));
+      return;
     }
+    
+    // Normal lasers can't fire when ammo is 0, doesn't apply to powerups.
+    if (_ammoCount > 0)
+    {
+      InstantiatePrefabAndPlayAudioClip(
+        _laserPrefab, _laserAudioClip, positionOffset: new Vector3(0, 1.05f, 0));
+      ReduceAmmoCount();
+    }
+  }
 
-    ReduceAmmoCount();
-
-    // TODO: triple shot is higher volume and sounds a little off possible because it plays x3?
+  private void InstantiatePrefabAndPlayAudioClip(
+    GameObject prefab, AudioClip audioClip, Vector3 positionOffset = default)
+  {
+    Instantiate(
+      prefab,
+      transform.position + positionOffset, Quaternion.identity);
+    _audioSource.clip = audioClip;
+    
+    // TODO(Improvement): triple shot is higher volume and sounds a little off possible because it plays x3?
     // Is it possible for Tripleshot to just play the sound once but just amp the volume?
     if (_audioSource == null)
     {
-      Debug.LogError("_audioSource was null in Player FireLaser.");
+      Debug.LogError("_audioSource was null in Player FireWeapon.");
     }
-
-    _audioSource.clip = _laserAudioClip;
     _audioSource.Play();
-
   }
 
   private void OnTriggerEnter2D(Collider2D other)
   {
-    // TODO: was attempting to try to only damage ship once even when the two
+    // TODO(Improvement): was attempting to try to only damage ship once even when the two
     // enemy lasers hit the ship, but for some reason this never triggers. Even when
     // turning off box colliders and rigidbodies on child laser and enabling both
     // on the parent object...
@@ -184,13 +238,11 @@ public class Player : MonoBehaviour
     // Randomly select one of the damages to enable if lives > 1, otherwise skip
     if (_lives > 1)
     {
-      System.Random random = new System.Random();
-      int randomIndex = random.Next(_damageObjects.Count);
-      _damageObjects[randomIndex].SetActive(true);
-      // This precludes gaining health so change this if that becomes a feature.
-      _damageObjects.RemoveAt(randomIndex); // Prevent it from being enabled again.
+      ShowDamage();
     }
-
+    
+    _mainCamera.ShakeCamera(2f);
+    
     _lives--;
     _uiManager.UpdateLives(_lives);
 
@@ -200,79 +252,140 @@ public class Player : MonoBehaviour
       Destroy(this.gameObject, _audioSource.clip.length);
     }
   }
-    
-    private void DamageShields() {
-      _shieldStrength--;
-      if (_shieldStrength == 0)
+  
+  private void DamagePrefab(bool enable)
+  {
+    System.Random random = new System.Random();
+    bool damagePrefabActionCompleted = false;
+    while (!damagePrefabActionCompleted)
+    {
+      int randomIndex = random.Next(_damageObjects.Count);
+      bool prefabActive = _damageObjects[randomIndex].activeSelf;
+      if (prefabActive != enable)
       {
-        _areShieldsActive = false;
-        _shieldsPrefab.SetActive(false);
-        return;
+        _damageObjects[randomIndex].SetActive(enable);
+        damagePrefabActionCompleted = true;
       }
-      // Shields can take three hits, then they disappear.
-      Color shieldColor = _shieldsRenderer.color;
-      shieldColor = new Color(
-        shieldColor.r, shieldColor.g, shieldColor.b,
-        shieldColor.a - (shieldColor.maxColorComponent / 3.0f));
-      _shieldsRenderer.color = shieldColor;
     }
+  }
+  private void ShowDamage()
+  {
+    DamagePrefab(true);
+  }
 
-    public void TripleShotActive()
-    {
-      _isTripleShotActive = true;
-      StartCoroutine(TripleShotPowerUpExpireRoutine());
-    }
-
-    private IEnumerator TripleShotPowerUpExpireRoutine()
-    {
-      yield return new WaitForSeconds(5f);
-      _isTripleShotActive = false;
-    }
-
-    public void SpeedBoostPowerupActive()
-    {
-      _speed *= _speedMultipler;
-      _isSpeedBoostActive = true;
-      StartCoroutine(SpeedBoostPowerupExpireRoutine());
-    }
-
-    private IEnumerator SpeedBoostPowerupExpireRoutine()
-    {
-      yield return new WaitForSeconds(5f);
-      _speed /= _speedMultipler;
-      _isSpeedBoostActive = false;
-    }
-
-    public void ShieldsPowerupActive()
-    {
-      _shieldStrength = 3;
-      _shieldsRenderer.color = new Color(_shieldsRenderer.color.r, _shieldsRenderer.color.g, _shieldsRenderer.color.b,
-        _shieldsRenderer.color.maxColorComponent);
-      _areShieldsActive = true;
-      _shieldsPrefab.SetActive(true);
-    }
-
-    public int GetScore()
-    {
-      return _score;
-    }
-
-    public void AddToScore(int points)
-    {
-      _score += points;
-      _uiManager.UpdateScore(_score);
-    }
-
-    public int GetAmmoCount()
-    {
-      return _ammoCount;
-    }
+  private void RemoveDamage()
+  {
+    DamagePrefab(false);
+  }
     
-    private void ReduceAmmoCount()
+  private void DamageShields() {
+    _shieldStrength--;
+    if (_shieldStrength == 0)
     {
-      _ammoCount--;
-      _uiManager.UpdateAmmoCount(_ammoCount);
+      _areShieldsActive = false;
+      _shieldsPrefab.SetActive(false);
+      return;
     }
+    // Shields can take three hits, then they disappear.
+    Color shieldColor = _shieldsRenderer.color;
+    shieldColor = new Color(
+      shieldColor.r, shieldColor.g, shieldColor.b,
+      shieldColor.a - (shieldColor.maxColorComponent / 3.0f));
+    _shieldsRenderer.color = shieldColor;
+  }
+
+  public void TripleShotActive()
+  {
+    _isTripleShotActive = true;
+    this.RestartCoroutine(TripleShotPowerUpExpireRoutine(), ref _tripleShotExpireCoroutine);
+  }
+
+  private IEnumerator TripleShotPowerUpExpireRoutine()
+  {
+    yield return new WaitForSeconds(5f);
+    _isTripleShotActive = false;
+  }
+  
+  public void MissilePowerupActive()
+  {
+    _isMissleShotActive = true;
+    this.RestartCoroutine(MissilePowerUpExpireRoutine(), ref _missleExpireCoroutine);
+  }
+
+  private IEnumerator MissilePowerUpExpireRoutine()
+  {
+    yield return new WaitForSeconds(5f);
+    _isMissleShotActive = false;
+  }
+
+  public void SpeedBoostPowerupActive()
+  {
+    _speed *= _speedMultipler;
+    _isSpeedBoostActive = true;
+    this.RestartCoroutine(SpeedBoostPowerupExpireRoutine(), ref _speedBoostExpireCoroutine);
+  }
+  
+  private IEnumerator SpeedBoostPowerupExpireRoutine()
+  {
+    yield return new WaitForSeconds(5f);
+    _speed /= _speedMultipler;
+    _isSpeedBoostActive = false;
+  }
+
+  public void ShieldsPowerupActive()
+  {
+    _shieldStrength = 3;
+    _shieldsRenderer.color = new Color(_shieldsRenderer.color.r, _shieldsRenderer.color.g, _shieldsRenderer.color.b,
+      _shieldsRenderer.color.maxColorComponent);
+    _areShieldsActive = true;
+    _shieldsPrefab.SetActive(true);
+  }
+  
+  public void CollectAmmo()
+  {
+    _ammoCount += 1;
+    _uiManager.UpdateAmmoCount(_ammoCount);
+  }
+  
+  public void CollectLife()
+  {
+    _lives += 1;
+    RemoveDamage();
+    _uiManager.UpdateLives(_lives);
+  }
+
+  public float GetThrusterTimeSeconds()
+  {
+    return _thrusterTimeSeconds;
+  }
+  
+  public int GetScore()
+  {
+    return _score;
+  }
+  
+  public int GetLives()
+  {
+    return _lives;
+  }
+
+
+  public void AddToScore(int points)
+  {
+    _score += points;
+    _uiManager.UpdateScore(_score);
+  }
+
+  public int GetAmmoCount()
+  {
+    return _ammoCount;
+  }
+  
+  private void ReduceAmmoCount()
+  {
+    _ammoCount--;
+    _uiManager.UpdateAmmoCount(_ammoCount);
+  }
     
 }
 

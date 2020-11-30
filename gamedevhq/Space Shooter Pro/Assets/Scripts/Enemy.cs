@@ -12,6 +12,9 @@ public class Enemy : MonoBehaviour
   private GameObject _laserPrefab;
   private float _canFire = -1f;
   private float _fireRate = 3.0f;
+  private bool _defeated = false;
+  // How many times the enemy has repspawned at the top of the screen after reaching the bottom.
+  private int _respawnCount = 0;  
   
   [SerializeField]
   private float _speed = 4f;
@@ -23,14 +26,22 @@ public class Enemy : MonoBehaviour
 
   private Animator _animator;
 
+  public bool IsDefeated()
+  {
+    return _defeated;
+  }
+
+  public int GetRespawnCount()
+  {
+    return _respawnCount;
+  }
+  
   private void Start()
   {
     _player = GameObject.Find("Player").GetComponent<Player>();
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
-
-    // StartCoroutine(FireLasers());
 
     if (!_player)
     {
@@ -67,6 +78,7 @@ public class Enemy : MonoBehaviour
     {
       float randomX = Random.Range(-8f, 8f);
       transform.position = new Vector3(randomX, 7, 0);
+      _respawnCount++;
     }
   }
 
@@ -74,7 +86,7 @@ public class Enemy : MonoBehaviour
   {
     // TODO(bug): lasers can still fire during/after the death animation, we should check for
     // that start of that animation and not proceed with firing.
-    if (Time.time > _canFire)
+    if (!_defeated && Time.time > _canFire)
     {
       _fireRate = Random.Range(3f, 7f);
       _canFire = Time.time + _fireRate;
@@ -96,18 +108,7 @@ public class Enemy : MonoBehaviour
       {
         player.Damage();
       }
-      _animator.SetTrigger("OnEnemyDeath");
-      _speed = 0f;
-      // TODO: make this work in the future, at the moment it never gets to setting animFinished
-      // as true.
-      // StartCoroutine("PlayDeathAnimationThenDestroy");
-      if (_audioSource.enabled)
-      {
-        _audioSource.Play();
-      }
-      Destroy(GetComponent<Collider2D>());
-      Destroy(this.gameObject, 2.8f);
-      
+      DestroyEnemy();
     } else if (other.CompareTag("Laser"))
     {
       Laser laser = other.GetComponent<Laser>();
@@ -117,21 +118,40 @@ public class Enemy : MonoBehaviour
         if (laser.IsEnemyLaser)
           return;
       }
-      Destroy(other.gameObject);
-      if (_player)
-      {
-        _player.AddToScore(10);
-      }
-      _animator.SetTrigger("OnEnemyDeath");
-      _speed = 0f;
-      // StartCoroutine("PlayDeathAnimationThenDestroy");
-      _audioSource.Play();
-      Destroy(GetComponent<Collider2D>());
-      Destroy(this.gameObject, 3.1f);
+      PlayerEnemyKill(other);
+    } else if (other.CompareTag("Missile"))
+    {
+      PlayerEnemyKill(other);
     }
   }
+
+  private void PlayerEnemyKill(Collider2D other)
+  {
+    Destroy(other.gameObject);
+    DestroyEnemy();
+    if (_player)
+    {
+      _player.AddToScore(10);
+    }
+  }
+
+  private void DestroyEnemy()
+  {
+    _animator.SetTrigger("OnEnemyDeath");
+    _defeated = true;
+    _speed = 0f;
+    // TODO(Improvement): try to make this work in the future, at the moment it never gets to setting animFinished
+    // as true.
+    // StartCoroutine("PlayDeathAnimationThenDestroy");
+    if (_audioSource.enabled)
+    {
+      _audioSource.Play();
+    }
+    Destroy(GetComponent<Collider2D>());
+    Destroy(this.gameObject, 2.8f);
+  }
   
-  // TODO: This is a possible alternative way to play the death anim and destroy the
+  // TODO(Improvement): This is a possible alternative way to play the death anim and destroy the
   // object as soon as the animation finishes playing but it wasn't working.
   // private IEnumerator PlayDeathAnimationThenDestroy()
   // {

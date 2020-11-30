@@ -1,6 +1,10 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class SpawnManager : MonoBehaviour
 {
@@ -12,6 +16,8 @@ public class SpawnManager : MonoBehaviour
   private GameObject _powerupContainer;
   [SerializeField]
   private GameObject[] _powerups;
+  [SerializeField]
+  private float[] _powerUpWeights;  // Weights to use when calculating spawn rate.
 
   [SerializeField]
   private bool _stopSpawning = false;
@@ -43,13 +49,29 @@ public class SpawnManager : MonoBehaviour
     while (_stopSpawning == false)
     {
       float randomSpawnTime = Random.Range(3, 8);
-      int randomPowerUp = Random.Range(0, 3);
-      GameObject newPowerup = Instantiate(_powerups[randomPowerUp],
+      GameObject newPowerup = Instantiate(ChooseWeightedRandomPowerUp(),
                                           new Vector3(Random.Range(-8f, 8f), 7, 0),
                                           Quaternion.identity);
       newPowerup.transform.parent = _powerupContainer.transform;
       yield return new WaitForSeconds(randomSpawnTime);
     } 
+  }
+
+  private GameObject ChooseWeightedRandomPowerUp()
+  {
+    // Linear scan algo from: https://blog.bruce-hill.com/a-faster-weighted-random-choice
+    float remainingDistance = Random.value * _powerUpWeights.Sum();
+    for (int i = 0; i < _powerUpWeights.Length; i++)
+    {
+      remainingDistance -= _powerUpWeights[i];
+      if (remainingDistance < 0)
+      {
+        return _powerups[i];
+      }
+    }
+    Debug.LogError("Weighted random choice of powerups failed to find a value.");
+    // Fallback to non-weighted random choice if scan fails.
+    return _powerups[Random.Range(0, 6)];
   }
 
   public void OnPlayerDeath()

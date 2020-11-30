@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,6 +16,12 @@ public class UIManager : MonoBehaviour
     private Image _livesImage;
     [SerializeField]
     private Sprite[] _liveSprites;
+    [SerializeField] 
+    private GameObject _thrusterBar;
+    private GameObject _thrusterBarFill;  // Object that fills the bar with a color.
+    private Slider _thrusterBarSlider;  // Controls how filled the bar is with the color.
+    // Whether thruster bar is restoring, controls player's ability to use thrusters.
+    private bool _thrusterRestoring = false;
 
     private GameManager _gameManager;
     private Player _player;
@@ -28,6 +33,8 @@ public class UIManager : MonoBehaviour
         _gameOverText.gameObject.SetActive(false);
         _gameManager = GameObject.Find("Game_Manager").GetComponent<GameManager>();
         _player = GameObject.Find("Player").GetComponent<Player>();
+        _thrusterBarSlider = _thrusterBar.GetComponent<Slider>();
+        _thrusterBarFill = GameObject.FindWithTag("ThrusterBarFill");
         
         if (_gameManager == null)
         {
@@ -40,6 +47,14 @@ public class UIManager : MonoBehaviour
         else
         {
             Debug.LogError("Couldn't find Player from UIManager");
+        }
+        if (_thrusterBarSlider == null)
+        {
+            Debug.LogError("Couldn't find thrusterBar slider from UIManager");
+        }
+        if (_thrusterBarFill == null)
+        {
+            Debug.LogError("Couldn't find thrusterBar fill from UIManager");
         }
     }
 
@@ -96,16 +111,73 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private IEnumerator GameOverFlickerRoutine()
+    public bool IsThrusterBarRestoring()
+    {
+        return _thrusterRestoring;
+    }
+    
+    public void SetThrusterBarValue(float thrusterTimeRemaining)
+    {
+        float percentThrusterRemaining = thrusterTimeRemaining / _player.GetThrusterTimeSeconds();
+        _thrusterBarSlider.value = _thrusterBarSlider.maxValue * percentThrusterRemaining;
+    }
+
+    public void InitiateThrusterCooldown()
+    {
+        // TODO(Improvement): This check is necessary to prevent the cooldown coroutines from being
+        // called on every Update() loop. Possible to do it in a simpler way?
+        if (!_thrusterRestoring)
         {
-            while (true)
-            { 
-                _gameOverText.gameObject.SetActive(false);
-                yield return new WaitForSeconds(0.5f);
-                _gameOverText.gameObject.SetActive(true);
-                yield return new WaitForSeconds(0.5f);
-            }
+            _thrusterRestoring = true;
+            // Clamp the value to 0f max in case we undershoot into a negative float value.
+            _thrusterBarSlider.value = Mathf.Clamp(
+                _thrusterBarSlider.value, _thrusterBarSlider.minValue, _thrusterBarSlider.maxValue);
+            ThrusterBarCooldown();
         }
+    }
+    
+    private void ThrusterBarCooldown()
+    {
+        StartCoroutine(ThrusterBarFlickerRoutine());
+        StartCoroutine(ThrusterBarRestore());
+    }
+    
+    private IEnumerator ThrusterBarFlickerRoutine()
+    {
+        while (_thrusterRestoring)
+        { 
+            _thrusterBarFill.SetActive(false);
+            yield return new WaitForSeconds(0.1f);
+            _thrusterBarFill.SetActive(true);
+            yield return new WaitForSeconds(0.1f);
+        }
+    }
+    
+    // This restores the Thruster bar in 5 seconds as a cooldown.
+    private IEnumerator ThrusterBarRestore()
+    {
+        while (!(Mathf.Approximately(_thrusterBarSlider.value, _thrusterBarSlider.maxValue)))
+        {
+            yield return new WaitForSeconds(1f);
+            _thrusterBarSlider.value += .2f;
+        }
+        // Clamp the value to 1f max in case we overshoot.
+        _thrusterBarSlider.value = Mathf.Clamp(
+            _thrusterBarSlider.value, _thrusterBarSlider.minValue, _thrusterBarSlider.maxValue); 
+        _thrusterRestoring = false;
+        _player.RestoreThrusterTime();
+    }
+
+    private IEnumerator GameOverFlickerRoutine()
+    {
+        while (true)
+        { 
+            _gameOverText.gameObject.SetActive(false);
+            yield return new WaitForSeconds(0.5f);
+            _gameOverText.gameObject.SetActive(true);
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
     
    
 }
