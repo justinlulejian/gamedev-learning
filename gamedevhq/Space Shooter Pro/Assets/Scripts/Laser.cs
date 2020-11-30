@@ -9,6 +9,9 @@ public class Laser : MonoBehaviour
 {
   [SerializeField]
   private float _speed = 8.0f;
+  
+  public bool IsEnemyLaser { get; set; } = false;
+  
   private void Update()
   {
     CalculateMovementAndOrDestroy();
@@ -25,7 +28,7 @@ public class Laser : MonoBehaviour
 
     if (transform.position.y > 8f || transform.position.y < -8f)
     {
-      // TODO: this is meant to destroy triple shots, but it seems if you spam it you can get a few
+      // TODO(bug): this is meant to destroy triple shots, but it seems if you spam it you can get a few
       // triple shots to remain in the scene and they should be getting deleted.
       if (transform.parent != null)
       {
@@ -34,7 +37,5 @@ public class Laser : MonoBehaviour
       Destroy(this.gameObject);
     }
   }
-
-  public bool IsEnemyLaser { get; set; } = false;
 
 }

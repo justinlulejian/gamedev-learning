@@ -13,6 +13,8 @@ public class Enemy : MonoBehaviour
   private float _canFire = -1f;
   private float _fireRate = 3.0f;
   private bool _defeated = false;
+  // How many times the enemy has repspawned at the top of the screen after reaching the bottom.
+  private int _respawnCount = 0;  
   
   [SerializeField]
   private float _speed = 4f;
@@ -24,14 +26,22 @@ public class Enemy : MonoBehaviour
 
   private Animator _animator;
 
+  public bool IsDefeated()
+  {
+    return _defeated;
+  }
+
+  public int GetRespawnCount()
+  {
+    return _respawnCount;
+  }
+  
   private void Start()
   {
     _player = GameObject.Find("Player").GetComponent<Player>();
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
-
-    // StartCoroutine(FireLasers());
 
     if (!_player)
     {
@@ -68,6 +78,7 @@ public class Enemy : MonoBehaviour
     {
       float randomX = Random.Range(-8f, 8f);
       transform.position = new Vector3(randomX, 7, 0);
+      _respawnCount++;
     }
   }
 
@@ -107,13 +118,20 @@ public class Enemy : MonoBehaviour
         if (laser.IsEnemyLaser)
           return;
       }
-      Destroy(other.gameObject);
-      if (_player)
-      {
-        _player.AddToScore(10);
-      }
+      PlayerEnemyKill(other);
+    } else if (other.CompareTag("Missile"))
+    {
+      PlayerEnemyKill(other);
+    }
+  }
 
-      DestroyEnemy();
+  private void PlayerEnemyKill(Collider2D other)
+  {
+    Destroy(other.gameObject);
+    DestroyEnemy();
+    if (_player)
+    {
+      _player.AddToScore(10);
     }
   }
 
@@ -122,7 +140,7 @@ public class Enemy : MonoBehaviour
     _animator.SetTrigger("OnEnemyDeath");
     _defeated = true;
     _speed = 0f;
-    // TODO: try to make this work in the future, at the moment it never gets to setting animFinished
+    // TODO(Improvement): try to make this work in the future, at the moment it never gets to setting animFinished
     // as true.
     // StartCoroutine("PlayDeathAnimationThenDestroy");
     if (_audioSource.enabled)
@@ -133,7 +151,7 @@ public class Enemy : MonoBehaviour
     Destroy(this.gameObject, 2.8f);
   }
   
-  // TODO: This is a possible alternative way to play the death anim and destroy the
+  // TODO(Improvement): This is a possible alternative way to play the death anim and destroy the
   // object as soon as the animation finishes playing but it wasn't working.
   // private IEnumerator PlayDeathAnimationThenDestroy()
   // {
