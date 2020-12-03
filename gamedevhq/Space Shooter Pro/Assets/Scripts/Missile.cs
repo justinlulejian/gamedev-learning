@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 public class Missile : MonoBehaviour
 {
     
     [SerializeField]
-    private float _speed = 1f;
+    private float _speed = 8f;
 
     private GameObject _nearestEnemy = null;
     private Enemy _nearestEnemyObj = null;
@@ -30,6 +31,8 @@ public class Missile : MonoBehaviour
         // missile, a crosshair or something that matches the theme?
     }
     
+    // TODO(Improvement): Missiles should refind next nearest enemy has already been targeted by another
+    // missile/weapon.
     private GameObject FindNearestEnemy()
     {
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
@@ -59,6 +62,7 @@ public class Missile : MonoBehaviour
     
     private void CalculateMovementAndOrDestroy()
     {
+        // TODO(bug): If missile is fired before enemies appear it doesn't start tracking when they do appear.
         // Seek the enemy if one is present, otherwise just fly in a line upwards.
         MoveToEnemyOrDestroy();
     }
