@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +9,7 @@ public class UIManager : MonoBehaviour
     private Text _scoreText;
     [SerializeField] 
     private Text _ammoCountText;
+    private int maximumAmmoCount;
     [SerializeField] 
     private Text _gameOverText;
     [SerializeField] 
@@ -40,11 +42,7 @@ public class UIManager : MonoBehaviour
         {
             Debug.LogError("Couldn't find GameManager from UIManager");
         }
-        if (_player != null)
-        {
-            UpdateAmmoCount(_player.GetAmmoCount());
-        }
-        else
+        if (_player == null)
         {
             Debug.LogError("Couldn't find Player from UIManager");
         }
@@ -64,8 +62,8 @@ public class UIManager : MonoBehaviour
     }
     
     public void UpdateAmmoCount(int ammoCount)
-    { 
-        _ammoCountText.text = $"Ammo: {ammoCount.ToString()}";
+    {
+        _ammoCountText.text = String.Format("Ammo: {0} / {1}", ammoCount.ToString(), _player.GetMaximumAmmoCount());
         if (ammoCount < 1)
         {
             NotifyPlayerNoAmmo(ammoCount);

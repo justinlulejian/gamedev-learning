@@ -59,6 +59,7 @@ public class SpawnManager : MonoBehaviour
 
   private GameObject ChooseWeightedRandomPowerUp()
   {
+    return _powerups[5];
     // Linear scan algo from: https://blog.bruce-hill.com/a-faster-weighted-random-choice
     float remainingDistance = Random.value * _powerUpWeights.Sum();
     for (int i = 0; i < _powerUpWeights.Length; i++)
@@ -85,5 +86,7 @@ public class SpawnManager : MonoBehaviour
     {
       Destroy(powerUp.gameObject);
     }
+    // TODO(bug): Delete all laser and missile objects otherwise they (funnily) just float around after
+    // gameover.
   }
 }
