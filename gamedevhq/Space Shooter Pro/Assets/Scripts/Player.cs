@@ -349,8 +349,11 @@ public class Player : MonoBehaviour
   
   public void CollectAmmo()
   {
-    _ammoCount += 1;
-    _uiManager.UpdateAmmoCount(_ammoCount);
+    if (_ammoCount < _maximumAmmoCount)
+    {
+      _ammoCount += 1;
+      _uiManager.UpdateAmmoCount(_ammoCount);
+    }
   }
   
   public void CollectLife()
