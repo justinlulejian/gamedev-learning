@@ -64,6 +64,8 @@ public class Player : MonoBehaviour
 
   [SerializeField] 
   private int _ammoCount;
+
+  private static int _maximumAmmoCount;
   
   [SerializeField]
   private UIManager _uiManager;
@@ -72,7 +74,7 @@ public class Player : MonoBehaviour
   private MainCamera _mainCamera;
 
   private Renderer _renderer;
-  
+
   void Start()
   {
     
@@ -84,8 +86,11 @@ public class Player : MonoBehaviour
     _renderer.enabled = true;
     _shieldsRenderer = _shieldsPrefab.GetComponent<SpriteRenderer>();
     _mainCamera = GameObject.Find("Main Camera").GetComponent<MainCamera>();
+    _maximumAmmoCount = _ammoCount;
    
     transform.position = new Vector3(0, 0, 0);
+    
+    _uiManager.UpdateAmmoCount(GetCurrentAmmoCount());
 
     _thrusterTimeSecondsRemaining = _thrusterTimeSeconds;
     
@@ -117,6 +122,7 @@ public class Player : MonoBehaviour
   {
     if (Input.GetKey(KeyCode.LeftShift) && !_uiManager.IsThrusterBarRestoring())
     {
+      // TODO(bug): Using thrusters appears to be slower that speed powerup, ideally they'd be stackable?
       CalculateMovement(_speedMultipler);
       // TODO(Improvement): Make thruster bigger when thrusting to give user visual feedback
       // that thruster is going. Return to normal size when in cooldown.
@@ -343,8 +349,11 @@ public class Player : MonoBehaviour
   
   public void CollectAmmo()
   {
-    _ammoCount += 1;
-    _uiManager.UpdateAmmoCount(_ammoCount);
+    if (_ammoCount < _maximumAmmoCount)
+    {
+      _ammoCount += 1;
+      _uiManager.UpdateAmmoCount(_ammoCount);
+    }
   }
   
   public void CollectLife()
@@ -376,9 +385,14 @@ public class Player : MonoBehaviour
     _uiManager.UpdateScore(_score);
   }
 
-  public int GetAmmoCount()
+  public int GetCurrentAmmoCount()
   {
     return _ammoCount;
+  }
+  
+  public int GetMaximumAmmoCount()
+  {
+    return _maximumAmmoCount;
   }
   
   private void ReduceAmmoCount()

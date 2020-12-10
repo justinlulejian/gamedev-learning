@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -59,6 +56,9 @@ public class SpawnManager : MonoBehaviour
 
   private GameObject ChooseWeightedRandomPowerUp()
   {
+    // TODO(Improvement): Do not spawn powerups that are useless to the player. E.g. if they have shields, max ammo,
+    // max health, etc. do not spawn them. Powerups that time out should still be collectible though.
+    
     // Linear scan algo from: https://blog.bruce-hill.com/a-faster-weighted-random-choice
     float remainingDistance = Random.value * _powerUpWeights.Sum();
     for (int i = 0; i < _powerUpWeights.Length; i++)
@@ -71,7 +71,7 @@ public class SpawnManager : MonoBehaviour
     }
     Debug.LogError("Weighted random choice of powerups failed to find a value.");
     // Fallback to non-weighted random choice if scan fails.
-    return _powerups[Random.Range(0, 6)];
+    return _powerups[Random.Range(0, _powerups.Length)];
   }
 
   public void OnPlayerDeath()
@@ -85,5 +85,7 @@ public class SpawnManager : MonoBehaviour
     {
       Destroy(powerUp.gameObject);
     }
+    // TODO(bug): Delete all laser and missile objects otherwise they (funnily) just float around after
+    // gameover.
   }
 }

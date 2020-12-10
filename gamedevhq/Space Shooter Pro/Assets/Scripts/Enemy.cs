@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 using Random = UnityEngine.Random;
 
 public class Enemy : MonoBehaviour
@@ -26,6 +28,14 @@ public class Enemy : MonoBehaviour
 
   private Animator _animator;
 
+  // If we have more game objects with shields we should make a parent class/category with that functionality.
+  [SerializeField] 
+  private GameObject _shieldsPrefab;
+  // Keep track of how long enemy has been been in collision with player to re-damage if we stay collided for too long.
+  private float _playerEnemyCollideTimeTotal = 0f;
+  // Staying collided longer than this time by enemy will redamage player.
+  private const float _playerCollideTimeRedamage = .3f; 
+
   public bool IsDefeated()
   {
     return _defeated;
@@ -42,6 +52,7 @@ public class Enemy : MonoBehaviour
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
+    _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
 
     if (!_player)
     {
@@ -60,6 +71,10 @@ public class Enemy : MonoBehaviour
     if (_laserPrefab == null)
     {
       Debug.LogError("_laserPrefab was null when creating enemy");
+    }
+    if (_shieldsPrefab == null)
+    {
+      Debug.LogError("_shieldsPrefab was null when creating enemy");
     }
   }
 
@@ -108,7 +123,7 @@ public class Enemy : MonoBehaviour
       {
         player.Damage();
       }
-      DestroyEnemy();
+      PlayerDamageEnemy(other);
     } else if (other.CompareTag("Laser"))
     {
       Laser laser = other.GetComponent<Laser>();
@@ -118,16 +133,51 @@ public class Enemy : MonoBehaviour
         if (laser.IsEnemyLaser)
           return;
       }
-      PlayerEnemyKill(other);
+      PlayerDamageEnemy(other);
+      Destroy(other.gameObject);
     } else if (other.CompareTag("Missile"))
     {
-      PlayerEnemyKill(other);
+      PlayerDamageEnemy(other);
+      Destroy(other.gameObject);
+
+    }
+  }
+  
+  private void OnTriggerStay2D(Collider2D other)
+  {
+    // If the player stays collided with the enemy it will continue to damage the enemy and the player.
+    if (other.CompareTag("Player"))
+    {
+      _playerEnemyCollideTimeTotal += Time.deltaTime;
+      if (_playerEnemyCollideTimeTotal >= _playerCollideTimeRedamage) 
+      {
+        PlayerDamageEnemy(other);
+        Player player = other.transform.GetComponent<Player>();
+        if (player != null)
+        {
+          player.Damage();
+        }
+      }
     }
   }
 
+  private void OnTriggerExit2D(Collider2D other)
+  {
+    _playerEnemyCollideTimeTotal = 0f;
+  }
+
+  private void PlayerDamageEnemy(Collider2D other)
+  {
+    if (_shieldsPrefab.activeSelf)
+    {
+      _shieldsPrefab.SetActive(false);
+      return;
+    }
+    PlayerEnemyKill(other);
+  }
+  
   private void PlayerEnemyKill(Collider2D other)
   {
-    Destroy(other.gameObject);
     DestroyEnemy();
     if (_player)
     {
