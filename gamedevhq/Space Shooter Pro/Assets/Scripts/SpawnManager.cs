@@ -57,7 +57,7 @@ public class SpawnManager : MonoBehaviour
   private GameObject ChooseWeightedRandomPowerUp()
   {
     // TODO(Improvement): Do not spawn powerups that are useless to the player. E.g. if they have shields, max ammo,
-    // max health, etc. do not spawn them. Powerup that time out should still be collectible though.
+    // max health, etc. do not spawn them. Powerups that time out should still be collectible though.
     
     // Linear scan algo from: https://blog.bruce-hill.com/a-faster-weighted-random-choice
     float remainingDistance = Random.value * _powerUpWeights.Sum();
