@@ -122,18 +122,15 @@ public class Enemy : MonoBehaviour
   
   private IEnumerator FireOnVisiblePowerUpsRoutine()
   {
+    // Prevent preternatural ability for enemies to instantly destroy powerups on spawn.
+    yield return new WaitForSeconds(1.5f);
     while (!_defeated)
     {
-      CheckForVisiblePowerUpAndFire();
+      if (PowerUpInFrontOfEnemy())
+      {
+        FireLasers();
+      }
       yield return new WaitForSeconds(0.5f);
-    }
-  }
-
-  private void CheckForVisiblePowerUpAndFire()
-  {
-    if (PowerUpInFrontOfEnemy())
-    {
-      FireLasers();
     }
   }
 
