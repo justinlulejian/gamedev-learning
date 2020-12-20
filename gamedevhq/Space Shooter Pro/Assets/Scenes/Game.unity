@@ -1804,6 +1804,7 @@ MonoBehaviour:
   - {fileID: 3784937069146104167, guid: 1e578d51c4655004092c127444869de1, type: 3}
   - {fileID: 3962861844510630241, guid: d12352daa17e5a143a7df6c6a03aeef6, type: 3}
   - {fileID: 7803426080503418360, guid: 6c6ad6fa4e8a3b24395e5a80af4be2b1, type: 3}
+  - {fileID: 134908, guid: dcffff5d98c73e64b8935c2f9cb64291, type: 3}
   _powerUpWeights:
   - 0.7
   - 0.7
@@ -1811,6 +1812,7 @@ MonoBehaviour:
   - 0.7
   - 0.7
   - 0.3
+  - 0.5
   _stopSpawning: 0
 --- !u!1 &1983934739
 GameObject:
@@ -1900,8 +1902,11 @@ MonoBehaviour:
   _lives: 3
   _isTripleShotActive: 0
   _isSpeedBoostActive: 0
+  _isSpeedDecreaseActive: 0
   _isMissleShotActive: 0
   _areShieldsActive: 0
+  _slowedDownPlayerSpeed: 0
+  _spedUpPlayerSpeed: 0
   _shieldsPrefab: {fileID: 1377895524}
   _leftEngineDamage: {fileID: 2120173023}
   _rightEngineDamage: {fileID: 1294474231}
