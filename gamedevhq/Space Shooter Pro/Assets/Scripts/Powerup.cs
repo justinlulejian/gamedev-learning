@@ -9,7 +9,7 @@ using Debug = UnityEngine.Debug;
 public class Powerup : MonoBehaviour
 {
   [SerializeField]
-  private float _speed = 3.5f;
+  private float _speed = 3f;
 
   [SerializeField] 
   private AudioClip _pickupAudioClip;
@@ -65,6 +65,9 @@ public class Powerup : MonoBehaviour
             break;
           case 5:
             player.MissilePowerupActive();
+            break;
+          case 6:
+            player.SpeedDecreasePowerupActive();
             break;
           default:
             break;
