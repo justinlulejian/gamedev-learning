@@ -14,8 +14,8 @@ GameObject:
   - component: {fileID: 7803426080503418341}
   - component: {fileID: 6168919967778573011}
   m_Layer: 0
-  m_Name: Enemy_Seeking_Missle_Powerup
-  m_TagString: Untagged
+  m_Name: Enemy_Seeking_Missile_Powerup
+  m_TagString: PowerUp
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

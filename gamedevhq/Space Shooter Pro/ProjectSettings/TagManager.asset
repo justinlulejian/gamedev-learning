@@ -9,6 +9,7 @@ TagManager:
   - EnemyLaser
   - ThrusterBarFill
   - Missile
+  - PowerUp
   layers:
   - Default
   - TransparentFX
