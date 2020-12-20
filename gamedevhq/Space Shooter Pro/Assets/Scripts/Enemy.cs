@@ -53,6 +53,7 @@ public class Enemy : MonoBehaviour
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
     _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
+    StartCoroutine(FireOnVisiblePowerUpsRoutine());
 
     if (!_player)
     {
@@ -81,7 +82,7 @@ public class Enemy : MonoBehaviour
   void Update()
   {
     CalculateMovement();
-    FireLasers();
+    PeriodicFireLasers();
   }
 
   private void CalculateMovement()
@@ -97,21 +98,60 @@ public class Enemy : MonoBehaviour
     }
   }
 
-  private void FireLasers()
+  private void PeriodicFireLasers()
   {
     // TODO(bug): lasers can still fire during/after the death animation, we should check for
     // that start of that animation and not proceed with firing.
     if (!_defeated && Time.time > _canFire)
     {
-      _fireRate = Random.Range(3f, 7f);
-      _canFire = Time.time + _fireRate;
-      GameObject enemyLaser = Instantiate(_laserPrefab, transform.position, Quaternion.identity);
-      Laser[] lasers = enemyLaser.GetComponentsInChildren<Laser>();
-      foreach (var laser in lasers)
+      FireLasers();
+    }
+  }
+  
+  private void FireLasers()
+  {
+    _fireRate = Random.Range(3f, 7f);
+    _canFire = Time.time + _fireRate;
+    GameObject enemyLaser = Instantiate(_laserPrefab, transform.position, Quaternion.identity);
+    Laser[] lasers = enemyLaser.GetComponentsInChildren<Laser>();
+    foreach (var laser in lasers)
+    {
+      laser.IsEnemyLaser = true;
+    }
+  }
+  
+  private IEnumerator FireOnVisiblePowerUpsRoutine()
+  {
+    // Prevent preternatural ability for enemies to instantly destroy powerups on spawn.
+    yield return new WaitForSeconds(1.5f);
+    while (!_defeated)
+    {
+      if (PowerUpInFrontOfEnemy())
       {
-        laser.IsEnemyLaser = true;
+        FireLasers();
+      }
+      yield return new WaitForSeconds(0.5f);
+    }
+  }
+
+  private bool PowerUpInFrontOfEnemy()
+  {
+    GameObject[] powerUps = GameObject.FindGameObjectsWithTag("PowerUp");
+    GameObject powerUpInFrontOfEnemy = null;
+    foreach (var powerUp in powerUps)
+    {
+      // TODO(Improvement): Could this be more elegantly done with Vector3.Angle/SignedAngle?
+      // https://math.stackexchange.com/a/2587852
+      float angleToPowerUp = Mathf.Rad2Deg * (Mathf.Atan2(
+        powerUp.transform.position.y - this.gameObject.transform.position.y,
+        powerUp.transform.position.x - this.gameObject.transform.position.x));
+      // This is a 10 degree cone in front of the enemy. Deduced visually that lasers would hit.
+      if (angleToPowerUp > -95f && angleToPowerUp < -85f )
+      {
+        return true;
       }
     }
+    return false;
   }
 
   private void OnTriggerEnter2D(Collider2D other)
