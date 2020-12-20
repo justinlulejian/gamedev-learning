@@ -8,6 +8,7 @@ public class Player : MonoBehaviour
 {
   [SerializeField]
   private float _speed = 5f;
+  private float _defaultPlayerSpeed;
   private float _speedMultipler = 2f;
   [SerializeField]
   private GameObject _laserPrefab;
@@ -30,6 +31,8 @@ public class Player : MonoBehaviour
   private bool _isTripleShotActive = false;
   [SerializeField]
   private bool _isSpeedBoostActive = false;
+  [SerializeField]
+  private bool _isSpeedDecreaseActive = false;
   [SerializeField] 
   private bool _isMissleShotActive = false;
   [SerializeField]
@@ -38,6 +41,11 @@ public class Player : MonoBehaviour
   private Coroutine _tripleShotExpireCoroutine;
   private Coroutine _missleExpireCoroutine;
   private Coroutine _speedBoostExpireCoroutine;
+  
+  [SerializeField]
+  private float _slowedDownPlayerSpeed;
+  [SerializeField] 
+  private float _spedUpPlayerSpeed;
 
   [SerializeField] 
   private GameObject _shieldsPrefab;
@@ -87,6 +95,9 @@ public class Player : MonoBehaviour
     _shieldsRenderer = _shieldsPrefab.GetComponent<SpriteRenderer>();
     _mainCamera = GameObject.Find("Main Camera").GetComponent<MainCamera>();
     _maximumAmmoCount = _ammoCount;
+    _defaultPlayerSpeed = _speed;
+    _spedUpPlayerSpeed = _speed * _speedMultipler;
+    _slowedDownPlayerSpeed = _speed / _speedMultipler;
    
     transform.position = new Vector3(0, 0, 0);
     
@@ -122,8 +133,10 @@ public class Player : MonoBehaviour
   {
     if (Input.GetKey(KeyCode.LeftShift) && !_uiManager.IsThrusterBarRestoring())
     {
-      // TODO(bug): Using thrusters appears to be slower that speed powerup, ideally they'd be stackable?
-      CalculateMovement(_speedMultipler);
+      // TODO(bug): Using thrusters appears to be slower than speed powerup, ideally they'd be
+      // stackable?
+      SpeedUpPlayer();
+      CalculateMovement();
       // TODO(Improvement): Make thruster bigger when thrusting to give user visual feedback
       // that thruster is going. Return to normal size when in cooldown.
       if (_thrusterTimeSecondsRemaining > _minimumThrusterValue)
@@ -133,13 +146,14 @@ public class Player : MonoBehaviour
       }
       else
       {
+        ResetPlayerSpeed();
         _uiManager.InitiateThrusterCooldown();
       }
       
     }
     else
     {
-      CalculateMovement(1f);
+      CalculateMovement();
     }
     
     if (Input.GetKeyDown(KeyCode.Space) && Time.time > _canFire)
@@ -153,13 +167,13 @@ public class Player : MonoBehaviour
     _thrusterTimeSecondsRemaining = _thrusterTimeSeconds;
   }
 
-  private void CalculateMovement(float speedMultiplier)
+  private void CalculateMovement()
   {
     float horizontalInput = Input.GetAxis("Horizontal");
     float verticalInput = Input.GetAxis("Vertical");
 
     Vector3 direction = new Vector3(horizontalInput, verticalInput, 0);
-    transform.Translate(direction * (_speed * speedMultiplier * Time.deltaTime));
+    transform.Translate(direction * (_speed * Time.deltaTime));
 
     // Enforce minimum player bound on y to -3.8f.
     transform.position = new Vector3(
@@ -174,6 +188,21 @@ public class Player : MonoBehaviour
     {
       transform.position = new Vector3(11.3f, transform.position.y, 0);
     }
+  }
+
+  private void SpeedUpPlayer()
+  {
+    _speed = _spedUpPlayerSpeed;
+  }
+  
+  private void SlowDownPlayer()
+  {
+    _speed = _slowedDownPlayerSpeed;
+  }
+  
+  private void ResetPlayerSpeed()
+  {
+    _speed = _defaultPlayerSpeed;
   }
 
   void FireWeapon()
@@ -326,7 +355,7 @@ public class Player : MonoBehaviour
 
   public void SpeedBoostPowerupActive()
   {
-    _speed *= _speedMultipler;
+    SpeedUpPlayer();
     _isSpeedBoostActive = true;
     this.RestartCoroutine(SpeedBoostPowerupExpireRoutine(), ref _speedBoostExpireCoroutine);
   }
@@ -334,7 +363,23 @@ public class Player : MonoBehaviour
   private IEnumerator SpeedBoostPowerupExpireRoutine()
   {
     yield return new WaitForSeconds(5f);
-    _speed /= _speedMultipler;
+    ResetPlayerSpeed();
+    _isSpeedBoostActive = false;
+  }
+  
+  // TODO(Improvement): Should thrusters be able to override this decrease entirely or only
+  // partially reduce the effect?
+  public void SpeedDecreasePowerupActive()
+  {
+    SlowDownPlayer();
+    _isSpeedBoostActive = true;
+    this.RestartCoroutine(SpeedBoostPowerupExpireRoutine(), ref _speedBoostExpireCoroutine);
+  }
+  
+  private IEnumerator SpeedDecreasePowerupExpireRoutine()
+  {
+    yield return new WaitForSeconds(5f);
+    ResetPlayerSpeed();
     _isSpeedBoostActive = false;
   }
 
