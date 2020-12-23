@@ -9,6 +9,7 @@ public class SpawnManager : MonoBehaviour
   private GameObject _enemyPrefab;
   [SerializeField]
   private GameObject _enemyContainer;
+  // TODO(Improvement): Change the ammo pickup prefab to the ammo box sprite I have in the proj.
   [SerializeField]
   private GameObject _powerupContainer;
   [SerializeField]
