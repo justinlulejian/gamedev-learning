@@ -175,7 +175,7 @@ public class Enemy : MonoBehaviour
       }
       PlayerDamageEnemy(other);
       Destroy(other.gameObject);
-    } else if (other.CompareTag("Missile"))
+    } else if (other.CompareTag("Missile") || other.CompareTag("ShotgunShot"))
     {
       PlayerDamageEnemy(other);
       Destroy(other.gameObject);

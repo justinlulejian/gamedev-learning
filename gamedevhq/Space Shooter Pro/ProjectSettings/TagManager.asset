@@ -10,6 +10,7 @@ TagManager:
   - ThrusterBarFill
   - Missile
   - PowerUp
+  - ShotgunShot
   layers:
   - Default
   - TransparentFX
