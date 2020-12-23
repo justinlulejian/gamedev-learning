@@ -28,8 +28,8 @@ public class Laser : MonoBehaviour
 
     if (transform.position.y > 8f || transform.position.y < -8f)
     {
-      // TODO(bug): this is meant to destroy triple shots, but it seems if you spam it you can get a few
-      // triple shots to remain in the scene and they should be getting deleted.
+      // TODO(bug): this is meant to destroy triple shots, but it seems if you spam it you can get
+      // a few triple shots to remain in the scene and they should be getting deleted.
       if (transform.parent != null)
       {
         Destroy(transform.parent.gameObject);

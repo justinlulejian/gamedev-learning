@@ -14,8 +14,6 @@ public class Powerup : MonoBehaviour
   [SerializeField] 
   private AudioClip _pickupAudioClip;
 
-  private Renderer _renderer;
-
   // ID for powerups
   // 0 == triple
   // 1 == speed
@@ -23,10 +21,20 @@ public class Powerup : MonoBehaviour
   // 3 == ammo collectable
   // 4 == health collectable
   // 5 == missile
+  // 6 == negative powerup
+  // 7 == shotgun shot 
   [SerializeField]
   private int _powerupID;
 
-  void Update()
+  protected void Start()
+  {
+    if (_pickupAudioClip == null)
+    {
+      Debug.LogError("Powerup does not have pickup audio clip.");
+    }
+  }
+
+  protected void Update()
   {
     transform.Translate(Vector3.down * (_speed * Time.deltaTime));
     if (transform.position.y <= -4.5f)
@@ -68,6 +76,9 @@ public class Powerup : MonoBehaviour
             break;
           case 6:
             player.SpeedDecreasePowerupActive();
+            break;
+          case 7:
+            player.ShotgunPowerupActive();
             break;
           default:
             break;

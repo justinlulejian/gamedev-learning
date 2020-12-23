@@ -17,6 +17,8 @@ public class Player : MonoBehaviour
   [SerializeField]
   private GameObject _missilePrefab;
   [SerializeField]
+  private GameObject _shotgunPrefab;
+  [SerializeField]
   private float _fireRate = 0.15f;
   private float _canFire = -1f;
   [SerializeField]
@@ -35,11 +37,14 @@ public class Player : MonoBehaviour
   private bool _isSpeedDecreaseActive = false;
   [SerializeField] 
   private bool _isMissleShotActive = false;
+  [SerializeField] 
+  private bool _isShotgunShotActive = false;
   [SerializeField]
   private bool _areShieldsActive = false;
   private int _shieldStrength = 0;
   private Coroutine _tripleShotExpireCoroutine;
   private Coroutine _missleExpireCoroutine;
+  private Coroutine _shotgunExpireCoroutine;
   private Coroutine _speedBoostExpireCoroutine;
   
   [SerializeField]
@@ -64,6 +69,8 @@ public class Player : MonoBehaviour
   private AudioClip _laserAudioClip;
   [SerializeField] 
   private AudioClip _missileAudioClip;
+  [SerializeField] 
+  private AudioClip _shotgunAudioClip;
   [SerializeField]
   private AudioClip _explosionAudioClip;
 
@@ -81,7 +88,6 @@ public class Player : MonoBehaviour
   [SerializeField]
   private MainCamera _mainCamera;
 
-  private Renderer _renderer;
 
   void Start()
   {
@@ -90,8 +96,6 @@ public class Player : MonoBehaviour
     _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
     _audioSource = GetComponent<AudioSource>(); 
     _damageObjects = new List<GameObject>{_leftEngineDamage, _rightEngineDamage};
-    _renderer = GetComponent<Renderer>();
-    _renderer.enabled = true;
     _shieldsRenderer = _shieldsPrefab.GetComponent<SpriteRenderer>();
     _mainCamera = GameObject.Find("Main Camera").GetComponent<MainCamera>();
     _maximumAmmoCount = _ammoCount;
@@ -116,10 +120,6 @@ public class Player : MonoBehaviour
     if (_audioSource == null)
     {
       Debug.LogError("_audioSource was null when creating player");
-    }
-    if (_renderer == null)
-    {
-      Debug.LogError("_renderer was null when creating player");
     }
     if (_shieldsRenderer == null) {
       Debug.LogError("Sprite renderer on player shield prefab is null.");
@@ -218,8 +218,14 @@ public class Player : MonoBehaviour
         _missilePrefab, _missileAudioClip, positionOffset:new Vector3(0, 1f, 0));
       return;
     }
+    else if (_isShotgunShotActive)
+    {
+      InstantiatePrefabAndPlayAudioClip(
+        _shotgunPrefab, _shotgunAudioClip, positionOffset:new Vector3(0, 1f, 0));
+      return;
+    }
     
-    // Normal lasers can't fire when ammo is 0, doesn't apply to powerups.
+    // Normal lasers can't fire when ammo is 0, but that doesn't apply to powerups.
     if (_ammoCount > 0)
     {
       InstantiatePrefabAndPlayAudioClip(
@@ -334,7 +340,8 @@ public class Player : MonoBehaviour
     _isTripleShotActive = true;
     this.RestartCoroutine(TripleShotPowerUpExpireRoutine(), ref _tripleShotExpireCoroutine);
   }
-
+  
+  // TODO(Improvement): Refactor the common expire routines into a configurable single one.
   private IEnumerator TripleShotPowerUpExpireRoutine()
   {
     yield return new WaitForSeconds(5f);
@@ -351,6 +358,18 @@ public class Player : MonoBehaviour
   {
     yield return new WaitForSeconds(5f);
     _isMissleShotActive = false;
+  }
+  
+  public void ShotgunPowerupActive()
+  {
+    _isShotgunShotActive = true;
+    this.RestartCoroutine(ShotgunPowerupExpireRoutine(), ref _shotgunExpireCoroutine);
+  }
+
+  private IEnumerator ShotgunPowerupExpireRoutine()
+  {
+    yield return new WaitForSeconds(5f);
+    _isShotgunShotActive = false;
   }
 
   public void SpeedBoostPowerupActive()
