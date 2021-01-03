@@ -55,6 +55,7 @@ public class Enemy : MonoBehaviour
     _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
     StartCoroutine(FireOnVisiblePowerUpsRoutine());
 
+    // TODO(?): Is !obj same as == null?
     if (!_player)
     {
       Debug.LogError("Player is null from Enemy.");
