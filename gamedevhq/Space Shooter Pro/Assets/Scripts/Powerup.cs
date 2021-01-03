@@ -25,22 +25,55 @@ public class Powerup : MonoBehaviour
   // 7 == shotgun shot 
   [SerializeField]
   private int _powerupID;
+  
+  private SpawnManager _spawnManager;
+  private bool _playerCollecting = false;
+  [SerializeField] 
+  private float _playerCollectingSpeedMultiplier = 2f;
+  private Vector3 _lastPlayerPosition;
 
   protected void Start()
   {
+    _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
+    
     if (_pickupAudioClip == null)
     {
       Debug.LogError("Powerup does not have pickup audio clip.");
+    }
+    if (_spawnManager == null)
+    {
+      Debug.LogError("Spawn manager is null from Powerup.");
     }
   }
 
   protected void Update()
   {
-    transform.Translate(Vector3.down * (_speed * Time.deltaTime));
-    if (transform.position.y <= -4.5f)
+    if (_playerCollecting)
     {
-      Destroy(this.gameObject);
+      // Move towards player at an increased speed.
+      transform.position = Vector3.MoveTowards(
+        this.transform.position, _lastPlayerPosition,
+        (_speed * _playerCollectingSpeedMultiplier) * Time.deltaTime);
     }
+    else
+    {
+      transform.Translate(Vector3.down * (_speed * Time.deltaTime));
+      if (transform.position.y <= -4.5f)
+      {
+        _spawnManager.RemovePowerUpFromGame(this);
+      }
+    }
+    // Reset so player does not have to explicitly indicate it wants to stop collecting.
+    _playerCollecting = false;
+
+  }
+
+  public void PlayerCollecting(bool collecting, Vector3 playerPosition)
+  {
+
+    _playerCollecting = collecting;
+    _lastPlayerPosition = playerPosition;
+
   }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -80,11 +113,9 @@ public class Powerup : MonoBehaviour
           case 7:
             player.ShotgunPowerupActive();
             break;
-          default:
-            break;
         }
       }
-      Destroy(this.gameObject);
+      _spawnManager.RemovePowerUpFromGame(this);
     } else if (other.CompareTag("Laser"))
     {
       // Only destroy if this is an enemy laser.
@@ -92,7 +123,7 @@ public class Powerup : MonoBehaviour
         other.transform.parent != null && 
         other.transform.parent.CompareTag("EnemyLaser"))
       {
-        Destroy(this.gameObject);
+        _spawnManager.RemovePowerUpFromGame(this);
       }
     }
   }

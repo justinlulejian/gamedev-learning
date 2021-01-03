@@ -14,6 +14,7 @@ public class SpawnManager : MonoBehaviour
   // TODO(Improvement): Change the ammo pickup prefab to the ammo box sprite I have in the proj.
   [SerializeField]
   private GameObject _powerupContainer;
+  private List<Powerup> _powerupObjContainer;
   [SerializeField]
   private GameObject[] _powerups;
   [SerializeField]
@@ -38,7 +39,7 @@ public class SpawnManager : MonoBehaviour
     {{"easy", 0.5f}, {"normal", 1f}, {"insane", 2f}};
   private int _enemyWaveNumber = 1;
 
-  // These should be double for correct precision on calculation later, but Mathf.Pow only takes floats?
+  // These should be double for precision on calculation later, but Mathf.Pow only takes floats?
   // NBD in any case.
   private static float _Phi = (Mathf.Sqrt(5f) + 1f) / 2f;
   private static float _phi = 1f / _Phi;
@@ -47,6 +48,7 @@ public class SpawnManager : MonoBehaviour
   {
     _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
     _player = GameObject.Find("Player").GetComponent<Player>();
+    _powerupObjContainer = new List<Powerup>();
     
     if (_uiManager == null)
     {
@@ -104,7 +106,7 @@ public class SpawnManager : MonoBehaviour
     // Display win for player since all waves appear to be done, but only if they've also survived.
     yield return new WaitUntil(() => _enemyContainer.transform.childCount == 0 && !_player.IsDestroyed);
     _stopSpawning = true;
-    DestroyEnemiesAndPowerups();
+    DestroyEnemiesAndPowerUps();
     _uiManager.GameWinUI();
   }
 
@@ -120,6 +122,7 @@ public class SpawnManager : MonoBehaviour
                                           new Vector3(Random.Range(-8f, 8f), 7, 0),
                                           Quaternion.identity);
       newPowerup.transform.parent = _powerupContainer.transform;
+      _powerupObjContainer.Add(newPowerup.GetComponent<Powerup>());
       yield return new WaitForSeconds(randomSpawnTime);
     } 
   }
@@ -144,7 +147,19 @@ public class SpawnManager : MonoBehaviour
     return _powerups[Random.Range(0, _powerups.Length)];
   }
 
-  private void DestroyEnemiesAndPowerups()
+  public List<Powerup> GetAllOnScreenPowerUps()
+  {
+    return _powerupObjContainer;
+  }
+
+  public void RemovePowerUpFromGame(Powerup powerUp)
+  {
+    _powerupObjContainer.Remove(powerUp);
+    // By destroying powerup it is removed from _powerupContainer.
+    Destroy(powerUp.gameObject);
+  }
+
+  private void DestroyEnemiesAndPowerUps()
   {
     foreach (Transform enemy in _enemyContainer.transform)
     {
@@ -161,6 +176,6 @@ public class SpawnManager : MonoBehaviour
   public void OnPlayerDeath()
   {
     _stopSpawning = true;
-    DestroyEnemiesAndPowerups();
+    DestroyEnemiesAndPowerUps();
   }
 }
