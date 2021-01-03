@@ -2009,6 +2009,8 @@ MonoBehaviour:
   _missileAudioClip: {fileID: 8300000, guid: 4f1ad1a2a4d33484db06895ac4295c80, type: 3}
   _shotgunAudioClip: {fileID: 8300000, guid: f095ed7fb8ed84caa814c14d6ea51fc0, type: 3}
   _explosionAudioClip: {fileID: 8300000, guid: a885c043fab7e46438bba03ba9dab6bc, type: 3}
+  _explosionPrefab: {fileID: 1820754866454578333, guid: 8fcfd0da984396642b7872cf435fd396,
+    type: 3}
   _score: 0
   _isDestroyed: 0
   _ammoCount: 15
