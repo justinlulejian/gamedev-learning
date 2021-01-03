@@ -78,6 +78,9 @@ public class Player : MonoBehaviour
   private int _score;
 
   [SerializeField] 
+  private bool _isDestroyed = false;
+
+  [SerializeField] 
   private int _ammoCount;
 
   private static int _maximumAmmoCount;
@@ -290,8 +293,20 @@ public class Player : MonoBehaviour
     if (_lives < 1)
     {
       _spawnManager.OnPlayerDeath();
-      Destroy(this.gameObject, _audioSource.clip.length);
+      OnPlayerDestroyed();
     }
+  }
+
+  public bool IsDestroyed => _isDestroyed;
+
+  private void OnPlayerDestroyed()
+  {
+    // TODO(bug): Player doesn't have explosion sequence. Use explosion animation and trigger
+    // it when this function runs, like OnEnemyDeath.
+    _isDestroyed = true;
+    _audioSource.clip = _explosionAudioClip;
+    _audioSource.Play();
+    Destroy(this.gameObject, _audioSource.clip.length);
   }
   
   private void DamagePrefab(bool enable)
@@ -415,7 +430,8 @@ public class Player : MonoBehaviour
   {
     if (_ammoCount < _maximumAmmoCount)
     {
-      _ammoCount += 1;
+      _ammoCount += 5;
+      _ammoCount = Mathf.Min(_ammoCount, _maximumAmmoCount);
       _uiManager.UpdateAmmoCount(_ammoCount);
     }
   }

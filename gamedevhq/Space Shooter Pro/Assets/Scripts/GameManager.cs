@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] 
-    private bool _isGameOver = false;
+    private bool _gameOver = false;
 
     private void Update()
     {
@@ -17,15 +17,15 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public bool IsGameOver => _isGameOver;
+    public bool IsGameOver => _gameOver;
 
     public void GameOver()
     {
-        _isGameOver = true;
+        _gameOver = true;
         StartCoroutine(WaitForRestartRoutine());
         
     }
-    
+
     private IEnumerator WaitForRestartRoutine()
     {
         while (!Input.GetKeyDown(KeyCode.R))

@@ -13,6 +13,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] 
     private Text _gameOverText;
     [SerializeField] 
+    private Text _gameWinText;
+    [SerializeField] 
     private Text _restartText;
     [SerializeField]
     private Image _livesImage;
@@ -33,10 +35,16 @@ public class UIManager : MonoBehaviour
     {
         _scoreText.text = "Score: 0";
         _gameOverText.gameObject.SetActive(false);
+        _gameWinText.gameObject.SetActive(false);
         _gameManager = GameObject.Find("Game_Manager").GetComponent<GameManager>();
         _player = GameObject.Find("Player").GetComponent<Player>();
         _thrusterBarSlider = _thrusterBar.GetComponent<Slider>();
         _thrusterBarFill = GameObject.FindWithTag("ThrusterBarFill");
+
+        if (_gameOverText == null || _gameWinText == null)
+        {
+            Debug.LogError("Couldn't find game win and/or game over text from UIManager");
+        }
         
         if (_gameManager == null)
         {
@@ -63,7 +71,7 @@ public class UIManager : MonoBehaviour
     
     public void UpdateAmmoCount(int ammoCount)
     {
-        _ammoCountText.text = String.Format("Ammo: {0} / {1}", ammoCount.ToString(), _player.GetMaximumAmmoCount());
+        _ammoCountText.text = $"Ammo: {ammoCount.ToString()} / {_player.GetMaximumAmmoCount().ToString()}";
         if (ammoCount < 1)
         {
             NotifyPlayerNoAmmo(ammoCount);
@@ -102,11 +110,24 @@ public class UIManager : MonoBehaviour
 
         if (currentLives < 1)
         {
-            _gameOverText.gameObject.SetActive(true);
-            StartCoroutine(GameOverFlickerRoutine());
-            _restartText.gameObject.SetActive(true);
-            _gameManager.GameOver();
+            GameOverUI();
         }
+    }
+
+    // TODO(Improvement): These two ui methods should be inverted where callers call gamemanager,
+    // which then calls UI manager to display relevant UI.
+    private void GameOverUI()
+    {
+        StartCoroutine(GameTextFlickerRoutine(_gameOverText));
+        _restartText.gameObject.SetActive(true);
+        _gameManager.GameOver();
+    }
+    
+    public void GameWinUI()
+    {
+        StartCoroutine(GameTextFlickerRoutine(_gameWinText));
+        _restartText.gameObject.SetActive(true);
+        _gameManager.GameOver();
     }
 
     public bool IsThrusterBarRestoring()
@@ -166,13 +187,13 @@ public class UIManager : MonoBehaviour
         _player.RestoreThrusterTime();
     }
 
-    private IEnumerator GameOverFlickerRoutine()
+    private IEnumerator GameTextFlickerRoutine(Text gameText)
     {
         while (true)
         { 
-            _gameOverText.gameObject.SetActive(false);
+            gameText.gameObject.SetActive(true);
             yield return new WaitForSeconds(0.5f);
-            _gameOverText.gameObject.SetActive(true);
+            gameText.gameObject.SetActive(false);
             yield return new WaitForSeconds(0.5f);
         }
     }
