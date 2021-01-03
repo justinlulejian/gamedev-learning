@@ -71,8 +71,8 @@ public class Player : MonoBehaviour
   private AudioClip _missileAudioClip;
   [SerializeField] 
   private AudioClip _shotgunAudioClip;
-  [SerializeField]
-  private AudioClip _explosionAudioClip;
+  [SerializeField] 
+  private GameObject _explosionPrefab;
 
   [SerializeField] 
   private int _score;
@@ -129,6 +129,9 @@ public class Player : MonoBehaviour
     }
     if (_mainCamera == null) {
       Debug.LogError("Camera is null when creating player.");
+    }
+    if (_explosionPrefab == null) {
+      Debug.LogError("explosionPrefab is null when creating player.");
     }
   }
 
@@ -301,12 +304,15 @@ public class Player : MonoBehaviour
 
   private void OnPlayerDestroyed()
   {
-    // TODO(bug): Player doesn't have explosion sequence. Use explosion animation and trigger
-    // it when this function runs, like OnEnemyDeath.
-    _isDestroyed = true;
-    _audioSource.clip = _explosionAudioClip;
-    _audioSource.Play();
-    Destroy(this.gameObject, _audioSource.clip.length);
+
+    // TODO(Improvement): Enemy two-laser hitting can cause explosion prefab to instantiate twice, 
+    // could be remedied by detected enemy laser parent object vs each laser individually.
+    if (!_isDestroyed)
+    {
+      Instantiate(_explosionPrefab, transform.position, Quaternion.identity);
+      _isDestroyed = true;
+    }
+    Destroy(this.gameObject, 0.10f);
   }
   
   private void DamagePrefab(bool enable)
