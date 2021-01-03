@@ -94,7 +94,6 @@ public class Player : MonoBehaviour
 
   void Start()
   {
-    
     _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
     _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
     _audioSource = GetComponent<AudioSource>(); 
@@ -165,6 +164,14 @@ public class Player : MonoBehaviour
     if (Input.GetKeyDown(KeyCode.Space) && Time.time > _canFire)
     {
       FireWeapon();
+    }
+    
+    if (Input.GetKey(KeyCode.C))
+    {
+      foreach (var powerUp in _spawnManager.GetAllOnScreenPowerUps())
+      {
+        powerUp.PlayerCollecting(true, this.transform.position);
+      }
     }
   }
 
