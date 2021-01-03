@@ -181,7 +181,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1749963203}
-  m_RootOrder: 4
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
@@ -680,7 +680,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1749963203}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1719,9 +1719,10 @@ RectTransform:
   - {fileID: 572353558}
   - {fileID: 1673124142}
   - {fileID: 603370245}
-  - {fileID: 958802972}
-  - {fileID: 247836297}
   - {fileID: 5199787727402603870}
+  - {fileID: 958802972}
+  - {fileID: 2067922403}
+  - {fileID: 247836297}
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1745,6 +1746,7 @@ MonoBehaviour:
   _scoreText: {fileID: 572353559}
   _ammoCountText: {fileID: 1673124143}
   _gameOverText: {fileID: 958802973}
+  _gameWinText: {fileID: 2067922404}
   _restartText: {fileID: 247836298}
   _livesImage: {fileID: 603370246}
   _liveSprites:
@@ -1821,6 +1823,10 @@ MonoBehaviour:
   - 0.5
   - 0.7
   _stopSpawning: 0
+  _player: {fileID: 0}
+  _uiManager: {fileID: 0}
+  _numberOfEnemyWavesRemaining: 6
+  _difficulty: normal
 --- !u!1 &1983934739
 GameObject:
   m_ObjectHideFlags: 0
@@ -1864,7 +1870,85 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe50d9199e1fc0f4c9ca0898b8ad118a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _isGameOver: 0
+  _gameOver: 0
+--- !u!1 &2067922402
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2067922403}
+  - component: {fileID: 2067922405}
+  - component: {fileID: 2067922404}
+  m_Layer: 5
+  m_Name: Game_Win_text
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &2067922403
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2067922402}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1749963203}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0.000015259, y: 25.689}
+  m_SizeDelta: {x: 301.33508, y: 51.378418}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2067922404
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2067922402}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 0.995283, b: 0.995283, a: 1}
+  m_RaycastTarget: 1
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FontData:
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_FontSize: 50
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 5
+    m_MaxSize: 50
+    m_Alignment: 0
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 1
+    m_VerticalOverflow: 1
+    m_LineSpacing: 1
+  m_Text: GAME WIN!!
+--- !u!222 &2067922405
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2067922402}
+  m_CullTransparentMesh: 0
 --- !u!1 &2089662035
 GameObject:
   m_ObjectHideFlags: 0
@@ -1926,6 +2010,7 @@ MonoBehaviour:
   _shotgunAudioClip: {fileID: 8300000, guid: f095ed7fb8ed84caa814c14d6ea51fc0, type: 3}
   _explosionAudioClip: {fileID: 8300000, guid: a885c043fab7e46438bba03ba9dab6bc, type: 3}
   _score: 0
+  _isDestroyed: 0
   _ammoCount: 15
   _uiManager: {fileID: 0}
   _mainCamera: {fileID: 0}
@@ -2506,7 +2591,7 @@ RectTransform:
   - {fileID: 5199787725609102105}
   - {fileID: 1141956274}
   m_Father: {fileID: 1749963203}
-  m_RootOrder: 5
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}

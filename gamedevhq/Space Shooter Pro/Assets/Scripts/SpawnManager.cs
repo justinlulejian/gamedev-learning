@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -16,9 +18,45 @@ public class SpawnManager : MonoBehaviour
   private GameObject[] _powerups;
   [SerializeField]
   private float[] _powerUpWeights;  // Weights to use when calculating spawn rate.
-
+  
   [SerializeField]
   private bool _stopSpawning = false;
+  
+  [SerializeField]
+  private Player _player;
+  
+  [SerializeField]
+  private UIManager _uiManager;
+  
+  // Enemy spawn logic.
+  // Since we use Fibonacci to calculate, numbers beyond 6 get very high. 
+  [SerializeField] 
+  private int _numberOfEnemyWavesRemaining = 6;
+  [SerializeField] 
+  private String _difficulty = "normal";
+  private Dictionary<string, float> _difficultyToFactorMap = new Dictionary<string, float>()
+    {{"easy", 0.5f}, {"normal", 1f}, {"insane", 2f}};
+  private int _enemyWaveNumber = 1;
+
+  // These should be double for correct precision on calculation later, but Mathf.Pow only takes floats?
+  // NBD in any case.
+  private static float _Phi = (Mathf.Sqrt(5f) + 1f) / 2f;
+  private static float _phi = 1f / _Phi;
+
+  private void Start()
+  {
+    _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
+    _player = GameObject.Find("Player").GetComponent<Player>();
+    
+    if (_uiManager == null)
+    {
+      Debug.LogError("Couldn't find UiManager from SpawnManager");
+    }
+    if (_player == null)
+    {
+      Debug.LogError("Player is null from SpawnManager.");
+    }
+  }
 
   public void StartSpawning()
   {
@@ -26,17 +64,48 @@ public class SpawnManager : MonoBehaviour
     StartCoroutine(SpawnPowerupRoutine());
   }
 
+  private int CalculateNumberOfEnemiesInWave(int enemyWaveNumber)
+  {
+    // Formula: https://math.hmc.edu/funfacts/fibonacci-number-formula/
+    // Graphical representation of difficulty levels to number of enemies
+    // https://www.desmos.com/calculator/legniuqsnt
+    return Mathf.CeilToInt(
+      ((Mathf.Abs(
+         (Mathf.Pow(_Phi, enemyWaveNumber) - Mathf.Pow(_phi, _enemyWaveNumber))
+         / Mathf.Sqrt(5)))
+       * _difficultyToFactorMap[_difficulty]));
+  }
+
   private IEnumerator SpawnEnemyRoutine()
   {
-    yield return new WaitForSeconds(3.0f);
-    
-    while (_stopSpawning == false)
+    while (_numberOfEnemyWavesRemaining > 0 && _stopSpawning == false)
     {
-      Vector3 randomPosToSpawn = new Vector3(Random.Range(-8f, 8f), 7, 0);
-      GameObject newEnemy = Instantiate(_enemyPrefab, randomPosToSpawn, Quaternion.identity);
-      newEnemy.transform.parent = _enemyContainer.transform;
-      yield return new WaitForSeconds(5.0f);
+      yield return new WaitUntil(() => _enemyContainer.transform.childCount == 0);
+
+      if (_stopSpawning)
+      {
+        break;
+      } 
+      
+      _numberOfEnemyWavesRemaining--;
+      int numberOfEnemiesToSpawnForWave = CalculateNumberOfEnemiesInWave(_enemyWaveNumber);
+      while (numberOfEnemiesToSpawnForWave > 0)
+      {
+        // TODO(Improvement): adjust random pos created to ensure enemy sprites don't overlap on one
+        // another.
+        Vector3 randomPosToSpawn = new Vector3(Random.Range(-8f, 8f), 7, 0);
+        GameObject newEnemy = Instantiate(_enemyPrefab, randomPosToSpawn, Quaternion.identity);
+        newEnemy.transform.parent = _enemyContainer.transform;
+        numberOfEnemiesToSpawnForWave--;
+      }
+
+      _enemyWaveNumber++;
     }
+    // Display win for player since all waves appear to be done, but only if they've also survived.
+    yield return new WaitUntil(() => _enemyContainer.transform.childCount == 0 && !_player.IsDestroyed);
+    _stopSpawning = true;
+    DestroyEnemiesAndPowerups();
+    _uiManager.GameWinUI();
   }
 
   private IEnumerator SpawnPowerupRoutine()
@@ -75,9 +144,8 @@ public class SpawnManager : MonoBehaviour
     return _powerups[Random.Range(0, _powerups.Length)];
   }
 
-  public void OnPlayerDeath()
+  private void DestroyEnemiesAndPowerups()
   {
-    _stopSpawning = true;
     foreach (Transform enemy in _enemyContainer.transform)
     {
       Destroy(enemy.gameObject);
@@ -87,6 +155,12 @@ public class SpawnManager : MonoBehaviour
       Destroy(powerUp.gameObject);
     }
     // TODO(bug): Delete all laser and missile objects otherwise they (funnily) just float around after
-    // gameover.
+    // gameover if they are present when player dies.
+  }
+
+  public void OnPlayerDeath()
+  {
+    _stopSpawning = true;
+    DestroyEnemiesAndPowerups();
   }
 }
