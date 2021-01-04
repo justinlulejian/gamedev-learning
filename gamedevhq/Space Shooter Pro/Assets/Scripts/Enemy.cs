@@ -135,14 +135,15 @@ public class Enemy : MonoBehaviour
     yield return new WaitForSeconds(1.5f);
     while (!_defeated)
     {
+      // TODO: Test that player and powerup both work as expected visually, then cleanup and submit.
       // Fire on power ups that are in front of them.
-      _
-      if (ObjectsInDirectionOfEnemy(_spawnManager.GetAllOnScreenPowerUps(), Vector3.down))
+      if (ObjectsInDirectionOfEnemy(
+        _spawnManager.GetAllOnScreenPowerUps().Select(p => p.gameObject).ToList(), Vector3.down))
       {
         FireLasers(Vector3.down);
       }
       // Fire on player behind them.
-      if (ObjectsInDirectionOfEnemy(new List<GameObject>[] {_player.gameObject}, Vector3.up))
+      if (ObjectsInDirectionOfEnemy(new List<GameObject> {_player.gameObject}, Vector3.up))
       {
         FireLasers(Vector3.up);
       }
