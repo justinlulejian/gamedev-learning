@@ -15,11 +15,23 @@ public class Enemy : MonoBehaviour
   private float _canFire = -1f;
   private float _fireRate = 3.0f;
   private bool _defeated = false;
-  // How many times the enemy has repspawned at the top of the screen after reaching the bottom.
+  // How many times the enemy has respawned at the top of the screen after reaching the bottom.
   private int _respawnCount = 0;  
   
   [SerializeField]
   private float _speed = 4f;
+
+  private enum EnemyMovementType
+  {
+    StraightDown,
+    SweepIn,
+  }
+  private EnemyMovementType _enemyMovementType;
+  private Vector3 _startPosition;
+  // Not all movement types use the end position at the moment, though they could. Currently only SweepIn does.
+  private Vector3 _endPosition;
+  private float _sweepMovementlerpTime = 1f;
+  private float _sweepMovementCurrentLerpTime;
   
   [SerializeField]
   private AudioSource _audioSource;
@@ -35,8 +47,8 @@ public class Enemy : MonoBehaviour
   private GameObject _shieldsPrefab;
   // Keep track of how long enemy has been been in collision with player to re-damage if we stay collided for too long.
   private float _playerEnemyCollideTimeTotal = 0f;
-  // Staying collided longer than this time by enemy will redamage player.
-  private const float _playerCollideTimeRedamage = .3f; 
+  // Staying collided longer than this time with enemy will redamage player.
+  private const float _playerCollideTimeRedamage = .3f;
 
   public bool IsDefeated()
   {
@@ -56,6 +68,14 @@ public class Enemy : MonoBehaviour
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
     _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
+    _enemyMovementType = ChooseMovementType();
+    _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
+    if (_enemyMovementType == EnemyMovementType.SweepIn)
+    {
+      _endPosition = CalculateNewSweepEndPosition(_startPosition);
+    } 
+    transform.position = _startPosition;
+    transform.rotation = Quaternion.identity;
     StartCoroutine(FireOnPowerUpsAndPlayerBehindRoutine());
 
     // TODO(?): Is !obj same as == null?
@@ -85,26 +105,101 @@ public class Enemy : MonoBehaviour
       Debug.LogError("_shieldsPrefab was null when creating enemy");
     }
   }
+  
+  private Vector3 CalculateNewSweepEndPosition(Vector3 startPosition)
+  {
+    // Subtracting 2 from startPosition.y so enemies don't move entirely off-screen.
+    return new Vector3(startPosition.x * -1f, Random.Range(startPosition.y - 2f, -6.5f), startPosition.z);
+  }
 
   void Update()
   {
+    // When destorying enemies _speed is set to 0 which causes movement to be weird for some movement types. 
+    if (IsDefeated())
+    {
+      return;
+    }
     CalculateMovement();
     PeriodicFireLasers();
   }
 
+  private EnemyMovementType ChooseMovementType()
+  {
+    Array movementValues = Enum.GetValues(typeof(EnemyMovementType));
+    System.Random random = new System.Random();
+    return (EnemyMovementType) movementValues.GetValue(random.Next(movementValues.Length));
+  }
+
+  private Vector3 SetStartPositionBasedOnMovementType(EnemyMovementType enemyMovementType)
+  {
+    Vector3 startPosition = new Vector3();
+    
+    switch (enemyMovementType)
+    {
+      case EnemyMovementType.StraightDown:
+        // TODO(Improvement): adjust random pos created to ensure enemy sprites don't overlap on one
+        // another.
+        // Spawn in a random position along top of screen.
+        startPosition = new Vector3(Random.Range(-8f, 8f), 7, 0);
+        break;
+      case EnemyMovementType.SweepIn:
+        float sideOfMap = Random.value > 0.5f ? -11f : 11f;  // -11 is left, 11 is right.
+        startPosition = new Vector3(sideOfMap, 8, 0);
+        break;
+    }
+
+    return startPosition;
+  }
+
   private void CalculateMovement()
+  {
+    switch (_enemyMovementType)
+    { 
+      case EnemyMovementType.StraightDown:
+        StraightDownMovement(); 
+        break;
+      case EnemyMovementType.SweepIn:
+        SweepInMovement();
+        break;
+    }
+  }
+
+  private void StraightDownMovement()
   {
     Vector3 moveShip = Vector3.down * (_speed * Time.deltaTime);
     transform.Translate(moveShip);
 
     if (transform.position.y <= -5f)
     {
+      // Respawn back at the top of the screen.
       float randomX = Random.Range(-8f, 8f);
       transform.position = new Vector3(randomX, 7, 0);
       _respawnCount++;
     }
   }
 
+  private void SweepInMovement()
+  {
+    // Inspiration from https://chicounity3d.wordpress.com/2014/05/23/how-to-lerp-like-a-pro/.
+    // TODO(Improvement): Without dividing by some value, Time.deltaTime increases too quickly and causes the enemy to
+    // move to fast in comparison to other movement types. 15f is an arbitrary values that slowed it down, but more
+    // thought could be used here on how to mathematically make the speeds similar across movement types.
+    _sweepMovementCurrentLerpTime += ((Time.deltaTime / 15f) * _speed);  
+    // We've reached the end position.
+    if (_sweepMovementCurrentLerpTime > _sweepMovementlerpTime) {
+      // Flips start position to opposite side (left/right) of map.
+      _startPosition = transform.position = new Vector3(_startPosition.x * -1f, _startPosition.y, _startPosition.z);
+      _endPosition = CalculateNewSweepEndPosition(_startPosition);
+      _sweepMovementCurrentLerpTime = 0f;
+      _respawnCount++;
+      return;
+    }
+ 
+    float interpValue = _sweepMovementCurrentLerpTime / _sweepMovementlerpTime;
+    interpValue = Mathf.Sin(interpValue * Mathf.PI * 0.5f);  // "sinerp"
+    transform.position = Vector3.Lerp(_startPosition, _endPosition, interpValue);
+  }
+  
   private void PeriodicFireLasers()
   {
     // TODO(bug): lasers can still fire during/after the death animation, we should check for
@@ -168,25 +263,19 @@ public class Enemy : MonoBehaviour
       float angleToObject = Mathf.Rad2Deg * (Mathf.Atan2(
         target.transform.position.y - this.gameObject.transform.position.y,
         target.transform.position.x - this.gameObject.transform.position.x));
-      Debug.Log($"target: {target}");
-      Debug.Log($"Angle to target: {angleToObject.ToString()}");
       // TODO: it looks like I'm not satisfying the angle comparison here
       if (direction == Vector3.down)
       {
-        Debug.Log($"Laser direction down.");
         // This is a 10 degree cone in front of the enemy. Deduced visually that lasers would hit targets.
         if (angleToObject > -95f && angleToObject < -85f)
         {
-          Debug.Log($"Target infront of enemy.");
           return true;
         }
       } else if (direction == Vector3.up) 
       {
-        Debug.Log($"Laser direction up.");
         // This is a 10 degree cone behind the enemy. Deduced visually that lasers would hit targets.
         if (angleToObject > 85f && angleToObject < 95f)
         {
-          Debug.Log($"Target behind of enemy.");
           return true;
         }
       }
@@ -219,7 +308,6 @@ public class Enemy : MonoBehaviour
     {
       PlayerDamageEnemy(other);
       Destroy(other.gameObject);
-
     }
   }
   
