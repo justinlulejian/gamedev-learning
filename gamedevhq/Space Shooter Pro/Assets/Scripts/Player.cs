@@ -241,16 +241,17 @@ public class Player : MonoBehaviour
     // Normal lasers can't fire when ammo is 0, but that doesn't apply to powerups.
     if (_ammoCount > 0)
     {
-      InstantiatePrefabAndPlayAudioClip(
+      GameObject laser = InstantiatePrefabAndPlayAudioClip(
         _laserPrefab, _laserAudioClip, positionOffset: new Vector3(0, 1.05f, 0));
+      laser.GetComponent<Laser>().LaserDirection = Vector3.up;
       ReduceAmmoCount();
     }
   }
 
-  private void InstantiatePrefabAndPlayAudioClip(
+  private GameObject InstantiatePrefabAndPlayAudioClip(
     GameObject prefab, AudioClip audioClip, Vector3 positionOffset = default)
   {
-    Instantiate(
+    GameObject instantiatedPrefab = Instantiate(
       prefab,
       transform.position + positionOffset, Quaternion.identity);
     _audioSource.clip = audioClip;
@@ -262,6 +263,7 @@ public class Player : MonoBehaviour
       Debug.LogError("_audioSource was null in Player FireWeapon.");
     }
     _audioSource.Play();
+    return instantiatedPrefab;
   }
 
   private void OnTriggerEnter2D(Collider2D other)
