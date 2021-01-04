@@ -10,6 +10,8 @@ public class SpawnManager : MonoBehaviour
   [SerializeField]
   private GameObject _enemyPrefab;
   [SerializeField]
+  private GameObject _bossPrefab;
+  [SerializeField]
   private GameObject _enemyContainer;
   // TODO(Improvement): Change the ammo pickup prefab to the ammo box sprite I have in the proj.
   [SerializeField]
@@ -78,6 +80,12 @@ public class SpawnManager : MonoBehaviour
        * _difficultyToFactorMap[_difficulty]));
   }
 
+  private void SpawnBossWave()
+  {
+    GameObject newEnemy = Instantiate(_bossPrefab);
+    newEnemy.transform.parent = _enemyContainer.transform;
+  }
+
   private IEnumerator SpawnEnemyRoutine()
   {
     while (_numberOfEnemyWavesRemaining > 0 && _stopSpawning == false)
@@ -100,13 +108,19 @@ public class SpawnManager : MonoBehaviour
 
       _enemyWaveNumber++;
     }
+
+    if (_numberOfEnemyWavesRemaining == 0)
+    {
+      SpawnBossWave();
+    }
+    
     // Display win for player since all waves appear to be done, but only if Player survived.
     yield return new WaitUntil(() => _enemyContainer.transform.childCount == 0 && !_player.IsDestroyed);
     _stopSpawning = true;
     DestroyEnemiesAndPowerUps();
     _uiManager.GameWinUI();
   }
-
+  
   private IEnumerator SpawnPowerupRoutine()
   {
     yield return new WaitForSeconds(3.0f);
