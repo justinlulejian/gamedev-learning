@@ -26,6 +26,8 @@ public class Enemy : MonoBehaviour
 
   private Player _player;
 
+  private SpawnManager _spawnManager;
+
   private Animator _animator;
 
   // If we have more game objects with shields we should make a parent class/category with that functionality.
@@ -49,18 +51,23 @@ public class Enemy : MonoBehaviour
   private void Start()
   {
     _player = GameObject.Find("Player").GetComponent<Player>();
+    _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
     _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
-    StartCoroutine(FireOnVisiblePowerUpsRoutine());
+    // StartCoroutine(FireOnPowerUpsInFrontRoutine());
+    StartCoroutine(FireOnPowerUpsAndPlayerBehindRoutine());
 
     // TODO(?): Is !obj same as == null?
     if (!_player)
     {
       Debug.LogError("Player is null from Enemy.");
     }
-
+    if (_spawnManager == null)
+    {
+      Debug.LogError("Spawn manager is null from Enemy.");
+    }
     _animator = gameObject.GetComponent<Animator>();
     if (!_animator)
     {
@@ -83,7 +90,7 @@ public class Enemy : MonoBehaviour
   void Update()
   {
     CalculateMovement();
-    PeriodicFireLasers();
+    // PeriodicFireLasers();
   }
 
   private void CalculateMovement()
@@ -105,11 +112,11 @@ public class Enemy : MonoBehaviour
     // that start of that animation and not proceed with firing.
     if (!_defeated && Time.time > _canFire)
     {
-      FireLasers();
+      FireLasers(Vector3.down);
     }
   }
   
-  private void FireLasers()
+  private void FireLasers(Vector3 direction)
   {
     _fireRate = Random.Range(3f, 7f);
     _canFire = Time.time + _fireRate;
@@ -118,38 +125,96 @@ public class Enemy : MonoBehaviour
     foreach (var laser in lasers)
     {
       laser.IsEnemyLaser = true;
-    }
-  }
-  
-  private IEnumerator FireOnVisiblePowerUpsRoutine()
-  {
-    // Prevent preternatural ability for enemies to instantly destroy powerups on spawn.
-    yield return new WaitForSeconds(1.5f);
-    while (!_defeated)
-    {
-      if (PowerUpInFrontOfEnemy())
-      {
-        FireLasers();
-      }
-      yield return new WaitForSeconds(0.5f);
+      laser.LaserDirection = direction;
     }
   }
 
-  private bool PowerUpInFrontOfEnemy()
+  private IEnumerator FireOnPowerUpsAndPlayerBehindRoutine()
   {
-    GameObject[] powerUps = GameObject.FindGameObjectsWithTag("PowerUp");
-    GameObject powerUpInFrontOfEnemy = null;
-    foreach (var powerUp in powerUps)
+    // Prevent preternatural ability for enemies to instantly destroy fire on spawn.
+    yield return new WaitForSeconds(1.5f);
+    while (!_defeated)
+    {
+      // Fire on power ups that are in front of them.
+      _
+      if (ObjectsInDirectionOfEnemy(_spawnManager.GetAllOnScreenPowerUps(), Vector3.down))
+      {
+        FireLasers(Vector3.down);
+      }
+      // Fire on player behind them.
+      if (ObjectsInDirectionOfEnemy(new List<GameObject>[] {_player.gameObject}, Vector3.up))
+      {
+        FireLasers(Vector3.up);
+      }
+      // TODO(Improvement): Rather than a static timer, maybe use WaitUntil either of the detection methods
+      // above returns true?
+      yield return new WaitForSeconds(2f);
+    }
+  }
+
+  // private IEnumerator FireOnPowerUpsInFrontRoutine()
+  // {
+  //   // Prevent preternatural ability for enemies to instantly destroy powerups infront of them on spawn.
+  //   yield return new WaitForSeconds(1.5f);
+  //   while (!_defeated)
+  //   {
+  //     if (ObjectsInDirectionOfEnemy(GameObject.FindGameObjectsWithTag("PowerUp"), Vector3.down))
+  //     {
+  //       FireLasers(Vector3.down);
+  //     }
+  //     yield return new WaitForSeconds(2f);
+  //   }
+  // }
+  
+  // private IEnumerator FireOnPlayerBehindRoutine()
+  // {
+  //   // Prevent preternatural ability for enemies to instantly destroy powerups infront of them on spawn.
+  //   yield return new WaitForSeconds(1.5f);
+  //   while (!_defeated)
+  //   {
+  //     // TODO: Refactor PowerUpInFrontOfEnemy to be generic and accept gameobjects to calculate against. Player
+  //     // should be found in Start() of enemy so it does not require a pickup. Optimization: can spawnmanager tracking
+  //     // of pickups be used here to avoid the FindGameObjectsWithTag tag?
+  //     if (ObjectsInDirectionOfEnemy(new GameObject[] {_player.gameObject}, Vector3.up))
+  //     {
+  //       FireLasers(Vector3.up);
+  //     }
+  //     yield return new WaitForSeconds(2f);
+  //   }
+  // }
+
+  // If any of the objects provided are in either in front (Vector3.down) or behind (Vector3.up)
+  // of the enemy specified then returns true, otherwise false.
+  private bool ObjectsInDirectionOfEnemy(List<GameObject> gameObjects, Vector3 direction)
+  {
+    foreach (var target in gameObjects)
     {
       // TODO(Improvement): Could this be more elegantly done with Vector3.Angle/SignedAngle?
       // https://math.stackexchange.com/a/2587852
-      float angleToPowerUp = Mathf.Rad2Deg * (Mathf.Atan2(
-        powerUp.transform.position.y - this.gameObject.transform.position.y,
-        powerUp.transform.position.x - this.gameObject.transform.position.x));
-      // This is a 10 degree cone in front of the enemy. Deduced visually that lasers would hit.
-      if (angleToPowerUp > -95f && angleToPowerUp < -85f )
+      float angleToObject = Mathf.Rad2Deg * (Mathf.Atan2(
+        target.transform.position.y - this.gameObject.transform.position.y,
+        target.transform.position.x - this.gameObject.transform.position.x));
+      Debug.Log($"target: {target}");
+      Debug.Log($"Angle to target: {angleToObject.ToString()}");
+      // TODO: it looks like I'm not satisfying the angle comparison here
+      if (direction == Vector3.down)
       {
-        return true;
+        Debug.Log($"Laser direction down.");
+        // This is a 10 degree cone in front of the enemy. Deduced visually that lasers would hit targets.
+        if (angleToObject > -95f && angleToObject < -85f)
+        {
+          Debug.Log($"Target infront of enemy.");
+          return true;
+        }
+      } else if (direction == Vector3.up) 
+      {
+        Debug.Log($"Laser direction up.");
+        // This is a 10 degree cone behind the enemy. Deduced visually that lasers would hit targets.
+        if (angleToObject > 85f && angleToObject < 95f)
+        {
+          Debug.Log($"Target behind of enemy.");
+          return true;
+        }
       }
     }
     return false;

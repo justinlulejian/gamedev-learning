@@ -12,6 +12,8 @@ public class Laser : MonoBehaviour
   
   public bool IsEnemyLaser { get; set; } = false;
   
+  public Vector3 LaserDirection { get; set; } = Vector3.down;
+  
   private void Update()
   {
     CalculateMovementAndOrDestroy();
@@ -19,7 +21,7 @@ public class Laser : MonoBehaviour
 
   private void CalculateMovementAndOrDestroy()
   {
-    Move(IsEnemyLaser ? Vector3.down : Vector3.up);
+    Move(LaserDirection);
   }
 
   private void Move(Vector3 direction)
@@ -29,7 +31,7 @@ public class Laser : MonoBehaviour
     if (transform.position.y > 8f || transform.position.y < -8f)
     {
       // TODO(bug): this is meant to destroy triple shots, but it seems if you spam it you can get
-      // a few triple shots to remain in the scene and they should be getting deleted.
+      // a few triple shots to remain in the scene but they should be getting deleted.
       if (transform.parent != null)
       {
         Destroy(transform.parent.gameObject);
