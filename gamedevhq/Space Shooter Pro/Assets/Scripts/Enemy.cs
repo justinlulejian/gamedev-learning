@@ -90,7 +90,7 @@ public class Enemy : MonoBehaviour
   void Update()
   {
     CalculateMovement();
-    // PeriodicFireLasers();
+    PeriodicFireLasers();
   }
 
   private void CalculateMovement()
@@ -120,7 +120,13 @@ public class Enemy : MonoBehaviour
   {
     _fireRate = Random.Range(3f, 7f);
     _canFire = Time.time + _fireRate;
-    GameObject enemyLaser = Instantiate(_laserPrefab, transform.position, Quaternion.identity);
+    Vector3 laserPosition = transform.position;
+    // Ensure lasers come out of back of ship rather than front.
+    if (direction == Vector3.up)
+    {
+      laserPosition += new Vector3(0, 2.75f, 0);
+    }
+    GameObject enemyLaser = Instantiate(_laserPrefab, laserPosition, Quaternion.identity);
     Laser[] lasers = enemyLaser.GetComponentsInChildren<Laser>();
     foreach (var laser in lasers)
     {
@@ -135,7 +141,6 @@ public class Enemy : MonoBehaviour
     yield return new WaitForSeconds(1.5f);
     while (!_defeated)
     {
-      // TODO: Test that player and powerup both work as expected visually, then cleanup and submit.
       // Fire on power ups that are in front of them.
       if (ObjectsInDirectionOfEnemy(
         _spawnManager.GetAllOnScreenPowerUps().Select(p => p.gameObject).ToList(), Vector3.down))
@@ -152,37 +157,6 @@ public class Enemy : MonoBehaviour
       yield return new WaitForSeconds(2f);
     }
   }
-
-  // private IEnumerator FireOnPowerUpsInFrontRoutine()
-  // {
-  //   // Prevent preternatural ability for enemies to instantly destroy powerups infront of them on spawn.
-  //   yield return new WaitForSeconds(1.5f);
-  //   while (!_defeated)
-  //   {
-  //     if (ObjectsInDirectionOfEnemy(GameObject.FindGameObjectsWithTag("PowerUp"), Vector3.down))
-  //     {
-  //       FireLasers(Vector3.down);
-  //     }
-  //     yield return new WaitForSeconds(2f);
-  //   }
-  // }
-  
-  // private IEnumerator FireOnPlayerBehindRoutine()
-  // {
-  //   // Prevent preternatural ability for enemies to instantly destroy powerups infront of them on spawn.
-  //   yield return new WaitForSeconds(1.5f);
-  //   while (!_defeated)
-  //   {
-  //     // TODO: Refactor PowerUpInFrontOfEnemy to be generic and accept gameobjects to calculate against. Player
-  //     // should be found in Start() of enemy so it does not require a pickup. Optimization: can spawnmanager tracking
-  //     // of pickups be used here to avoid the FindGameObjectsWithTag tag?
-  //     if (ObjectsInDirectionOfEnemy(new GameObject[] {_player.gameObject}, Vector3.up))
-  //     {
-  //       FireLasers(Vector3.up);
-  //     }
-  //     yield return new WaitForSeconds(2f);
-  //   }
-  // }
 
   // If any of the objects provided are in either in front (Vector3.down) or behind (Vector3.up)
   // of the enemy specified then returns true, otherwise false.
