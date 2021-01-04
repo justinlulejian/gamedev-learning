@@ -223,7 +223,11 @@ public class Player : MonoBehaviour
     _canFire = Time.time + _fireRate;
     if (_isTripleShotActive)
     {
-      InstantiatePrefabAndPlayAudioClip(_tripleShotPrefab, _laserAudioClip);
+      GameObject tripleShot = InstantiatePrefabAndPlayAudioClip(_tripleShotPrefab, _laserAudioClip);
+      foreach (Laser laser in tripleShot.GetComponentsInChildren<Laser>())
+      {
+        laser.LaserDirection= Vector3.up;
+      }
       return;
     } else if (_isMissleShotActive)
     {

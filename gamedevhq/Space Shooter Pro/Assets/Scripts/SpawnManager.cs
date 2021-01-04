@@ -93,17 +93,14 @@ public class SpawnManager : MonoBehaviour
       int numberOfEnemiesToSpawnForWave = CalculateNumberOfEnemiesInWave(_enemyWaveNumber);
       while (numberOfEnemiesToSpawnForWave > 0)
       {
-        // TODO(Improvement): adjust random pos created to ensure enemy sprites don't overlap on one
-        // another.
-        Vector3 randomPosToSpawn = new Vector3(Random.Range(-8f, 8f), 7, 0);
-        GameObject newEnemy = Instantiate(_enemyPrefab, randomPosToSpawn, Quaternion.identity);
+        GameObject newEnemy = Instantiate(_enemyPrefab);
         newEnemy.transform.parent = _enemyContainer.transform;
         numberOfEnemiesToSpawnForWave--;
       }
 
       _enemyWaveNumber++;
     }
-    // Display win for player since all waves appear to be done, but only if they've also survived.
+    // Display win for player since all waves appear to be done, but only if Player survived.
     yield return new WaitUntil(() => _enemyContainer.transform.childCount == 0 && !_player.IsDestroyed);
     _stopSpawning = true;
     DestroyEnemiesAndPowerUps();
