@@ -27,14 +27,14 @@ public class Enemy : MonoBehaviour
     SweepIn,
   }
   private EnemyMovementType _enemyMovementType;
-  private Vector3 _startPosition;
+  private protected Vector3 _startPosition;
   // Not all movement types use the end position at the moment, though they could. Currently only SweepIn does.
-  private Vector3 _endPosition;
-  private float _sweepMovementlerpTime = 1f;
-  private float _sweepMovementCurrentLerpTime;
+  private protected Vector3 _endPosition;
+  private float _movementLerpTime = 1f;
+  private float _movementCurrentLerpTime;
   
   [SerializeField]
-  private AudioSource _audioSource;
+  private protected AudioSource _audioSource;
 
   private Player _player;
 
@@ -60,7 +60,7 @@ public class Enemy : MonoBehaviour
     return _respawnCount;
   }
   
-  private void Start()
+  protected void Start()
   {
     _player = GameObject.Find("Player").GetComponent<Player>();
     _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
@@ -184,18 +184,19 @@ public class Enemy : MonoBehaviour
     // TODO(Improvement): Without dividing by some value, Time.deltaTime increases too quickly and causes the enemy to
     // move to fast in comparison to other movement types. 15f is an arbitrary values that slowed it down, but more
     // thought could be used here on how to mathematically make the speeds similar across movement types.
-    _sweepMovementCurrentLerpTime += ((Time.deltaTime / 15f) * _speed);  
+    // Perhaps increase _movementlerpTime inversely with speed?
+    _movementCurrentLerpTime += ((Time.deltaTime / 15f) * _speed);  
     // We've reached the end position.
-    if (_sweepMovementCurrentLerpTime > _sweepMovementlerpTime) {
+    if (_movementCurrentLerpTime > _movementLerpTime) {
       // Flips start position to opposite side (left/right) of map.
       _startPosition = transform.position = new Vector3(_startPosition.x * -1f, _startPosition.y, _startPosition.z);
       _endPosition = CalculateNewSweepEndPosition(_startPosition);
-      _sweepMovementCurrentLerpTime = 0f;
+      _movementCurrentLerpTime = 0f;
       _respawnCount++;
       return;
     }
  
-    float interpValue = _sweepMovementCurrentLerpTime / _sweepMovementlerpTime;
+    float interpValue = _movementCurrentLerpTime / _movementLerpTime;
     interpValue = Mathf.Sin(interpValue * Mathf.PI * 0.5f);  // "sinerp"
     transform.position = Vector3.Lerp(_startPosition, _endPosition, interpValue);
   }
@@ -241,6 +242,7 @@ public class Enemy : MonoBehaviour
       {
         FireLasers(Vector3.down);
       }
+      // TODO: If player destroyed by enemy/boss this can null reference.
       // Fire on player behind them.
       if (ObjectsInDirectionOfEnemy(new List<GameObject> {_player.gameObject}, Vector3.up))
       {
@@ -283,8 +285,36 @@ public class Enemy : MonoBehaviour
     return false;
   }
 
+  protected GameObject GetGameObjectFromCollisionOrCollider<T>(T coll)
+  {
+    GameObject gameObject;
+    if (typeof(T) == typeof(Collider2D))
+    {
+      Collider2D otherCollider2d = (Collider2D)(object)coll;
+      gameObject = otherCollider2d.gameObject;
+    } else if (typeof(T) == typeof(Collision2D))
+    {
+      Collision2D otherCollision2d = (Collision2D)(object)coll;
+      gameObject = otherCollision2d.gameObject;
+    }
+    else
+    {
+      Debug.LogError("Enemy trigger enter method called with invalid collision/collider.");
+      throw new NotImplementedException();
+    }
+
+    return gameObject;
+  } 
+
   private void OnTriggerEnter2D(Collider2D other)
   {
+    OnTriggerEntered2D(other);
+  }
+
+  protected void OnTriggerEntered2D<T>(T otherColl2d)
+  {
+    GameObject other = GetGameObjectFromCollisionOrCollider(otherColl2d);
+    
     if (other.CompareTag("Player"))
     {
       Player player = other.transform.GetComponent<Player>();
@@ -292,7 +322,7 @@ public class Enemy : MonoBehaviour
       {
         player.Damage();
       }
-      PlayerDamageEnemy(other);
+      PlayerDamageEnemy();
     } else if (other.CompareTag("Laser"))
     {
       Laser laser = other.GetComponent<Laser>();
@@ -302,24 +332,30 @@ public class Enemy : MonoBehaviour
         if (laser.IsEnemyLaser)
           return;
       }
-      PlayerDamageEnemy(other);
-      Destroy(other.gameObject);
+      PlayerDamageEnemy();
+      Destroy(other);
     } else if (other.CompareTag("Missile") || other.CompareTag("ShotgunShot"))
     {
-      PlayerDamageEnemy(other);
-      Destroy(other.gameObject);
+      PlayerDamageEnemy();
+      Destroy(other);
     }
   }
-  
+
   private void OnTriggerStay2D(Collider2D other)
   {
+    OnTriggerStayed2D(other);
+  }
+
+  protected void OnTriggerStayed2D<T>(T otherColl2d)
+  {
+    GameObject other = GetGameObjectFromCollisionOrCollider(otherColl2d);
     // If the player stays collided with the enemy it will continue to damage the enemy and the player.
     if (other.CompareTag("Player"))
     {
       _playerEnemyCollideTimeTotal += Time.deltaTime;
       if (_playerEnemyCollideTimeTotal >= _playerCollideTimeRedamage) 
       {
-        PlayerDamageEnemy(other);
+        PlayerDamageEnemy();
         Player player = other.transform.GetComponent<Player>();
         if (player != null)
         {
@@ -331,20 +367,25 @@ public class Enemy : MonoBehaviour
 
   private void OnTriggerExit2D(Collider2D other)
   {
+    OnTriggerExited2D();
+  }
+  
+  protected void OnTriggerExited2D()
+  {
     _playerEnemyCollideTimeTotal = 0f;
   }
 
-  private void PlayerDamageEnemy(Collider2D other)
+  protected virtual void PlayerDamageEnemy()
   {
     if (_shieldsPrefab.activeSelf)
     {
       _shieldsPrefab.SetActive(false);
       return;
     }
-    PlayerEnemyKill(other);
+    PlayerEnemyKill();
   }
   
-  private void PlayerEnemyKill(Collider2D other)
+  private void PlayerEnemyKill()
   {
     DestroyEnemy();
     if (_player)
