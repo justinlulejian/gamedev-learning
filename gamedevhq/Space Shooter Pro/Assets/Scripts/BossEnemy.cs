@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 public class BossEnemy : Enemy
 {
@@ -11,20 +10,20 @@ public class BossEnemy : Enemy
     [SerializeField]
     private GameObject _laserBeamPrefab;
     [SerializeField]
+    private float _specialAttackCooldown = 5f;
+    [SerializeField]
     private GameObject _damagePrefab;
     [SerializeField]
     private GameObject _deathPrefab;
+    private List<GameObject> _specialWeaponsActive;
     
     [SerializeField] 
     private int _bossLives = 10;
 
-    private float _movementLerpTime = 7f;
-    private float _movementCurrentLerpTime;
     private SpriteRenderer _spriteRenderer;
+    private Collider2D _collider;
     
     // TODO:
-    // 1. Get boss to spawn, then move slowly to middle of screen and sit there. Bonus: make is oscillate in a small circle.
-    // 2. When boss is hit by player weapons, there's some kind of damage feedback, a flash or explosion.
     // 3. Impl circleshot attack and laser beam attack.
     // If time: health bar that depletes over time, or just increasing number of damage sprites appended to it (enabled)
     // For fun: switch music to boss/enemy music from star ocean.
@@ -36,12 +35,21 @@ public class BossEnemy : Enemy
         // Spawn off screen.
         _startPosition = transform.position = new Vector3(0, 8, 0);
         // Middle-ish of screen.
-       _endPosition = new Vector3(0, 1, 0);
+       _endPosition = new Vector3(0, 2.5f, 0);
        _spriteRenderer = this.GetComponent<SpriteRenderer>();
+       _collider = this.GetComponent<Collider2D>();
+       // Causes the boss to move slower to _endPosition.
+       _movementLerpTime = 7f;
+       _specialWeaponsActive = new List<GameObject>();
        
        if (_spriteRenderer == null) {
            Debug.LogError("Sprite renderer for boss is null.");
        }
+       if (_collider == null) {
+           Debug.LogError("Collider for boss is null.");
+       }
+
+       StartCoroutine(routine: AttacksRoutine());
     }
 
     // Update is called once per frame
@@ -51,9 +59,11 @@ public class BossEnemy : Enemy
         {
             MoveToEndPosition();
         }
-
         OscillateMovement();
-
+        if (_specialWeaponsActive.Count == 0)
+        {
+            // PeriodicFireLasers();
+        }
     }
 
     private void MoveToEndPosition()
@@ -73,37 +83,23 @@ public class BossEnemy : Enemy
 
     private void OscillateMovement()
     {
-        
+        // TODO(Improvement): Make the boss move in small circles to simulate flight.
     }
     
-    // TODO: So apparently I just needed OnTriggerEnter2D...but if I don't define it here then it'll get
-    // called on the Enemy base class. So I need to define it here, do my logic, then hand if off to Enemy
-    // logic, but then make sure it calls my custom (overriden) damage logic.
     private void OnTriggerEnter2D(Collider2D other)
     {
-      OnTriggerEntered2D(other);
-    }
-
-    private void OnCollisionEnter2D(Collision2D other)
-    {
-        if (other.gameObject.CompareTag("Laser"))
+        if ((other.gameObject.CompareTag("Laser") && !other.GetComponent<Laser>().IsEnemyLaser)
+            || other.CompareTag("Missile") || other.CompareTag("ShotgunShot"))
         {
-            Vector2 collisionPoint = other.GetContact(0).point;
-            Instantiate(_damagePrefab, collisionPoint, Quaternion.identity);
-            PlayerDamageEnemy();
+            // Since the Laser is a trigger collider the best we can do is approximate where it hits with
+            // ClosestPoint and show damage there. This could be improved by changing trigger colliders to
+            // non-trigger physics colliders.
+            Instantiate(
+                _damagePrefab, _collider.ClosestPoint(other.transform.position), Quaternion.identity);
         }
-
-        base.OnTriggerEntered2D(other);
-    }
-    
-    private void OnCollisionStay2D(Collision2D other)
-    {
-        base.OnTriggerStayed2D(other);
-    }
-    
-    private void OnCollisionExit2D(Collision2D other)
-    {
-        base.OnTriggerExited2D();
+        
+        // TODO: do these both go to the same place?
+        OnTriggerEntered2D(other);
     }
 
     protected override void PlayerDamageEnemy()
@@ -111,13 +107,71 @@ public class BossEnemy : Enemy
         _bossLives--;
         if (_bossLives < 1)
         {
-            Instantiate(_damagePrefab, transform.position, Quaternion.identity);
-            if (_audioSource.enabled)
+            PlayerEnemyKill();
+        }
+    }
+
+    protected override void PlayerEnemyKill()
+    {
+        DestroyEnemy();
+        if (_player)
+        {
+            _player.AddToScore(100);
+        }
+    }
+
+    protected override void DestroyEnemy()
+    {
+        Instantiate(_deathPrefab, transform.position, Quaternion.identity);
+        if (_audioSource.enabled)
+        {
+            _audioSource.Play();
+        }
+        Destroy(GetComponent<PolygonCollider2D>());
+        this.gameObject.SetActive(false);
+        Destroy(this.gameObject, 2.8f);
+        foreach (var weapon in _specialWeaponsActive)
+        {
+            if (weapon != null)
             {
-                _audioSource.Play();
+                Destroy(weapon);
             }
-            Destroy(GetComponent<PolygonCollider2D>());
-            Destroy(this.gameObject, 2.8f);
+        }
+    }
+
+    private IEnumerator AttacksRoutine()
+    {
+        StartCoroutine(CleanUpExpiredWeapons());
+        // Wait until the boss settles into end position.
+        yield return new WaitUntil(() => transform.position == _endPosition);
+        while (true)
+        {
+            yield return new WaitUntil(() => _specialWeaponsActive.Count == 0);
+            // TODO: scale so they are infront of boss?
+            GameObject laserAttack = Instantiate(_laserBeamPrefab, transform.position + new Vector3(0, 1, 0),
+                Quaternion.identity);
+            _specialWeaponsActive.Add(laserAttack);
+            yield return new WaitForSeconds(_specialAttackCooldown);
+            // TODO: instantiate circle shot prefab.
+            GameObject circleShot = Instantiate(_laserBeamPrefab, transform.position + new Vector3(0, 1, 0),
+                Quaternion.identity);
+            _specialWeaponsActive.Add(laserAttack);
+        }
+    }
+
+    // Clean up special weapons that have been destroyed in the last second.
+    private IEnumerator CleanUpExpiredWeapons()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(1f);
+            for (int i = 0; i < _specialWeaponsActive.Count; i++)
+            {
+                if (_specialWeaponsActive[i] == null)
+                {
+                    _specialWeaponsActive.RemoveAt(i);
+                }
+            }
         }
     }
 }

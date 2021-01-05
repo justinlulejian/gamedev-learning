@@ -109,6 +109,8 @@ public class SpawnManager : MonoBehaviour
       _enemyWaveNumber++;
     }
 
+    // Wait until the final wave have been cleared.
+    yield return new WaitUntil(() => _enemyContainer.transform.childCount == 0);
     if (_numberOfEnemyWavesRemaining == 0)
     {
       SpawnBossWave();

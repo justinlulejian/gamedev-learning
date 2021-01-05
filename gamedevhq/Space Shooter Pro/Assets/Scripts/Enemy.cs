@@ -30,13 +30,13 @@ public class Enemy : MonoBehaviour
   private protected Vector3 _startPosition;
   // Not all movement types use the end position at the moment, though they could. Currently only SweepIn does.
   private protected Vector3 _endPosition;
-  private float _movementLerpTime = 1f;
-  private float _movementCurrentLerpTime;
+  private protected float _movementLerpTime = 1f;
+  private protected float _movementCurrentLerpTime;
   
   [SerializeField]
   private protected AudioSource _audioSource;
 
-  private Player _player;
+  private protected Player _player;
 
   private SpawnManager _spawnManager;
 
@@ -68,7 +68,8 @@ public class Enemy : MonoBehaviour
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
     _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
-    _enemyMovementType = ChooseMovementType();
+    // _enemyMovementType = ChooseMovementType();
+    _enemyMovementType = EnemyMovementType.StraightDown;
     _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
     if (_enemyMovementType == EnemyMovementType.SweepIn)
     {
@@ -140,7 +141,8 @@ public class Enemy : MonoBehaviour
         // TODO(Improvement): adjust random pos created to ensure enemy sprites don't overlap on one
         // another.
         // Spawn in a random position along top of screen.
-        startPosition = new Vector3(Random.Range(-8f, 8f), 7, 0);
+        // startPosition = new Vector3(Random.Range(-8f, 8f), 7, 0);
+        startPosition = transform.position;
         break;
       case EnemyMovementType.SweepIn:
         float sideOfMap = Random.value > 0.5f ? -11f : 11f;  // -11 is left, 11 is right.
@@ -201,7 +203,7 @@ public class Enemy : MonoBehaviour
     transform.position = Vector3.Lerp(_startPosition, _endPosition, interpValue);
   }
   
-  private void PeriodicFireLasers()
+  private protected void PeriodicFireLasers()
   {
     // TODO(bug): lasers can still fire during/after the death animation, we should check for
     // that start of that animation and not proceed with firing.
@@ -360,6 +362,7 @@ public class Enemy : MonoBehaviour
         if (player != null)
         {
           player.Damage();
+          _playerEnemyCollideTimeTotal = 0f;
         }
       }
     }
@@ -385,7 +388,7 @@ public class Enemy : MonoBehaviour
     PlayerEnemyKill();
   }
   
-  private void PlayerEnemyKill()
+  protected virtual void PlayerEnemyKill()
   {
     DestroyEnemy();
     if (_player)
@@ -394,7 +397,7 @@ public class Enemy : MonoBehaviour
     }
   }
 
-  private void DestroyEnemy()
+  protected virtual void DestroyEnemy()
   {
     _animator.SetTrigger("OnEnemyDeath");
     _defeated = true;
