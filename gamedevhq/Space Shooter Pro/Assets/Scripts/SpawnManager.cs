@@ -33,6 +33,7 @@ public class SpawnManager : MonoBehaviour
   
   // Enemy spawn logic.
   // Since we use Fibonacci to calculate, numbers beyond 6 get very high. 
+  // TODO(bug): Sometimes when _numberOfEnemyWavesRemaining == 1 there are two enemies/two waves that spawn?
   [SerializeField] 
   private int _numberOfEnemyWavesRemaining = 6;
   [SerializeField] 

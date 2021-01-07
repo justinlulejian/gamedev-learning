@@ -6,7 +6,7 @@ using UnityEngine;
 public class BossEnemy : Enemy
 {
     [SerializeField]
-    private GameObject _circleShotPrefab;
+    private GameObject _circleAttackPrefab;
     [SerializeField]
     private GameObject _laserBeamPrefab;
     [SerializeField]
@@ -24,9 +24,8 @@ public class BossEnemy : Enemy
     private Collider2D _collider;
     
     // TODO:
-    // 3. Impl circleshot attack and laser beam attack.
     // If time: health bar that depletes over time, or just increasing number of damage sprites appended to it (enabled)
-    // For fun: switch music to boss/enemy music from star ocean.
+    // For fun: switch music to boss/enemy music from star ocean (in downloads folder), will change in Audio_Manager?
     
     // Start is called before the first frame update
     void Start()
@@ -62,7 +61,7 @@ public class BossEnemy : Enemy
         OscillateMovement();
         if (_specialWeaponsActive.Count == 0)
         {
-            // PeriodicFireLasers();
+            PeriodicFireLasers();
         }
     }
 
@@ -147,15 +146,13 @@ public class BossEnemy : Enemy
         while (true)
         {
             yield return new WaitUntil(() => _specialWeaponsActive.Count == 0);
-            // TODO: scale so they are infront of boss?
             GameObject laserAttack = Instantiate(_laserBeamPrefab, transform.position + new Vector3(0, 1, 0),
                 Quaternion.identity);
             _specialWeaponsActive.Add(laserAttack);
             yield return new WaitForSeconds(_specialAttackCooldown);
-            // TODO: instantiate circle shot prefab.
-            GameObject circleShot = Instantiate(_laserBeamPrefab, transform.position + new Vector3(0, 1, 0),
-                Quaternion.identity);
-            _specialWeaponsActive.Add(laserAttack);
+            GameObject circleAttack = Instantiate(_circleAttackPrefab, transform.position, Quaternion.identity);
+            circleAttack.transform.parent = transform;
+            _specialWeaponsActive.Add(circleAttack);
         }
     }
 
@@ -173,5 +170,6 @@ public class BossEnemy : Enemy
                 }
             }
         }
+        yield return null;
     }
 }

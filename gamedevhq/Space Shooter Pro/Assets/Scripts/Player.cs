@@ -110,7 +110,7 @@ public class Player : MonoBehaviour
     _slowedDownPlayerSpeed = _speed / _speedMultipler;
    
     // TODO: change this back once done with boss ai.
-    transform.position = new Vector3(-10, -5, 0);
+    transform.position = new Vector3(0, 0, 0);
     
     _uiManager.UpdateAmmoCount(GetCurrentAmmoCount());
 
@@ -291,6 +291,10 @@ public class Player : MonoBehaviour
       }
     }
     if (other.CompareTag("BossLaser"))
+    {
+      Damage();
+    }
+    if (other.CompareTag("BossCircleShot"))
     {
       Damage();
     }

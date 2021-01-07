@@ -141,8 +141,8 @@ public class Enemy : MonoBehaviour
         // TODO(Improvement): adjust random pos created to ensure enemy sprites don't overlap on one
         // another.
         // Spawn in a random position along top of screen.
-        // startPosition = new Vector3(Random.Range(-8f, 8f), 7, 0);
-        startPosition = transform.position;
+        startPosition = new Vector3(Random.Range(-8f, 8f), 7, 0);
+        // startPosition = transform.position;
         break;
       case EnemyMovementType.SweepIn:
         float sideOfMap = Random.value > 0.5f ? -11f : 11f;  // -11 is left, 11 is right.

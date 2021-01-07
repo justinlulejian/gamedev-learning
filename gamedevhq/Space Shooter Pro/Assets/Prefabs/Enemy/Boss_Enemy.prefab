@@ -182,7 +182,8 @@ MonoBehaviour:
   _audioSource: {fileID: 0}
   _shieldsPrefab: {fileID: 700511071687347765, guid: 838062af32bd8344890381ddeccbffc9,
     type: 3}
-  _circleShotPrefab: {fileID: 0}
+  _circleAttackPrefab: {fileID: 5188468467568839195, guid: 8963a0e6fd956e14c98aad7ebfeb757c,
+    type: 3}
   _laserBeamPrefab: {fileID: 5213792574588183867, guid: cb84baca1a7fd4e48baeea1707af8fec,
     type: 3}
   _specialAttackCooldown: 5

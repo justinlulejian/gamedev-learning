@@ -26,6 +26,7 @@ public class BossLaserAttack : MonoBehaviour
     {
         GameObject laserChargeInstance = Instantiate(
             _laserChargePrefab, transform.position + new Vector3(0, -3, 0), Quaternion.identity);
+        laserChargeInstance.transform.parent = this.transform;
         // TODO: change back after debugging.
         yield return new WaitForSeconds(1f);
         // yield return new WaitForSeconds(_totalTimeToCharge);
@@ -37,6 +38,7 @@ public class BossLaserAttack : MonoBehaviour
     {
         GameObject laserShotInstance = Instantiate(
             _laserShotPrefab, transform.position + new Vector3(0, -5.5f, 0), Quaternion.identity);
+        laserShotInstance.transform.parent = this.transform;
         yield return new WaitForSeconds(_totalTimeToShoot);
         Destroy(laserShotInstance);
         Destroy(this.gameObject);
