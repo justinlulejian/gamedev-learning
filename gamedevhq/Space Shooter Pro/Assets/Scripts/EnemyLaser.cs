@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class EnemyLaser : MonoBehaviour
 {
-    // TODO: This was as second attempt to see if I could get the enemy laser to do just
+    // TODO(Improvement): This was as second attempt to see if I could get the enemy laser to do just
     // one damage for the two laser prefabs, it didn't do any damage at all.
     // private void OnTriggerEnter2D(Collider2D other)
     // {

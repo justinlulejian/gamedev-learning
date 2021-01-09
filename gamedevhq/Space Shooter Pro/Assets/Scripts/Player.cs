@@ -109,7 +109,6 @@ public class Player : MonoBehaviour
     _spedUpPlayerSpeed = _speed * _speedMultipler;
     _slowedDownPlayerSpeed = _speed / _speedMultipler;
    
-    // TODO: change this back once done with boss ai.
     transform.position = new Vector3(0, 0, 0);
     
     _uiManager.UpdateAmmoCount(GetCurrentAmmoCount());

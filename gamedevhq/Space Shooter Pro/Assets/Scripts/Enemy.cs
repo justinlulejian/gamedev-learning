@@ -243,7 +243,6 @@ public class Enemy : MonoBehaviour
       {
         FireLasers(Vector3.down);
       }
-      // TODO: If player destroyed by enemy/boss this can null reference.
       // Fire on player behind them.
       if (ObjectsInDirectionOfEnemy(new List<GameObject> {_player.gameObject}, Vector3.up))
       {
@@ -266,7 +265,6 @@ public class Enemy : MonoBehaviour
       float angleToObject = Mathf.Rad2Deg * (Mathf.Atan2(
         target.transform.position.y - this.gameObject.transform.position.y,
         target.transform.position.x - this.gameObject.transform.position.x));
-      // TODO: it looks like I'm not satisfying the angle comparison here
       if (direction == Vector3.down)
       {
         // This is a 10 degree cone in front of the enemy. Deduced visually that lasers would hit targets.
