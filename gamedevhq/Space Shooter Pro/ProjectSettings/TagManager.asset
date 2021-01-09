@@ -11,6 +11,8 @@ TagManager:
   - Missile
   - PowerUp
   - ShotgunShot
+  - BossLaser
+  - BossCircleShot
   layers:
   - Default
   - TransparentFX

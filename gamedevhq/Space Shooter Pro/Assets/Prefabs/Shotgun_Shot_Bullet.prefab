@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4610549697140017573}
   - component: {fileID: 4610549697140017570}
   m_Layer: 0
-  m_Name: Shotgun_Shot_Prefab
+  m_Name: Shotgun_Shot_Bullet
   m_TagString: ShotgunShot
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
