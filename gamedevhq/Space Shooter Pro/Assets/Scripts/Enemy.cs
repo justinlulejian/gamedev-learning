@@ -243,6 +243,7 @@ public class Enemy : MonoBehaviour
       {
         FireLasers(Vector3.down);
       }
+      // TODO: If player destroyed by enemy/boss this can null reference.
       // Fire on player behind them.
       if (ObjectsInDirectionOfEnemy(new List<GameObject> {_player.gameObject}, Vector3.up))
       {
