@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Numerics;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
@@ -12,34 +10,37 @@ public class BossCircleAttack : MonoBehaviour
     // The separation of each bullet in the circle from one another by angle. The lower the value the more bullets will
     // appear and higher the value less bullets will appear.
     [SerializeField] private float _bulletAngleSpread = 30f;
-    [SerializeField] private AudioSource _attackAudio;
+    private AudioSource _attackAudio;
+    private bool _attackAudioPlayed = false;
 
     private GameObject _boss;
 
     // How far away the bullets will spawn from boss.
-    [SerializeField] private float _bulletSpawnRadius = 2f;
+    [SerializeField] private float _bulletSpawnRadius = 3f;
+
+    private float _minimumBulletScale = 1f;
+    private float _maximumBulletScale = 2f;
+    private float _bulletScaleT = 0.0f;
+    private float _maximumBulletScaleT;
+    // How long bullets will wait until they launch out in directions.
+    [SerializeField] private float _timeToCharge = 3f;
+    private float _currentChargeTime;
 
     private HashSet<GameObject> _bulletsSpawned;
-    // TODO: 
-    // Eighth: do audio for this, but not per shot, just once in this attack (scifi shot 9 play once)
-    // Ninth: finish laser attack audio (scifi shot 7 on loop)
-    // tenth: make shotgun shots rotate around the circle before they shoot or simpler just have them breath
-    // smaller and larger as they move.
 
-
-    // Start is called before the first frame update
     void Start()
     {
         _boss = transform.parent.gameObject;
         Vector3 bossPosition = _boss.transform.position;
         _bulletsSpawned = new HashSet<GameObject>();
         _attackAudio = this.transform.GetComponent<AudioSource>();
+        _maximumBulletScaleT = _maximumBulletScale;
         
         if (_boss == null) {
             Debug.LogError("Boss circle attack cannot find boss, attack will not spawn relative to it.");
         }
         if (_attackAudio == null) {
-            Debug.LogError("Attack audio source not found on circle shot.");
+            Debug.LogError("Attack audio source not found on boss circle shot.");
         }
 
         Dictionary<float, Vector3> bulletSpawnPositionsAndRotations = CalculateBulletSpawnPositions(_bulletAngleSpread);
@@ -70,7 +71,6 @@ public class BossCircleAttack : MonoBehaviour
             // right so we subtract 90 to convert to the proper direction we want.
             float eulerZ =  angle - 90;
             spawnPositions[eulerZ] = spawnPosition;
-            Debug.Log($"Generated a bullet at angle {angle.ToString()}");
         }
         
         return spawnPositions;
@@ -79,7 +79,40 @@ public class BossCircleAttack : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        MoveBulletsOrDestroy();
+        AnimateBullets();
+        _currentChargeTime += Time.deltaTime;
+        if (_currentChargeTime > _timeToCharge)
+        {
+            if (!_attackAudioPlayed)
+            {
+                _attackAudio.Play();
+                _attackAudioPlayed = true;
+            }
+            MoveBulletsOrDestroy();
+        }
+    }
+
+    // TODO(Improvement): Have bullets rotate around boss in circle for a few seconds before launching.
+    // TODO(Improvement): Generalize this as an anim for other objects.
+    // Breath bullet scale.
+    private void AnimateBullets()
+    {
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            Transform bullet = transform.GetChild(i);
+            float interpScale = Mathf.Lerp(_minimumBulletScale, _maximumBulletScale, _bulletScaleT);
+            bullet.localScale = new Vector3(interpScale, interpScale, bullet.localScale.z);
+            _bulletScaleT += 0.5f * Time.deltaTime;
+            if (_bulletScaleT > _maximumBulletScaleT)
+            {
+                float tempMax = _maximumBulletScale;
+                _maximumBulletScale = _minimumBulletScale;
+                _minimumBulletScale = tempMax;
+                _bulletScaleT = 0.0f;
+
+            }
+        }
+        
     }
 
     private void MoveBulletsOrDestroy()

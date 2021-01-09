@@ -68,8 +68,7 @@ public class Enemy : MonoBehaviour
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
     _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
-    // _enemyMovementType = ChooseMovementType();
-    _enemyMovementType = EnemyMovementType.StraightDown;
+    _enemyMovementType = ChooseMovementType();
     _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
     if (_enemyMovementType == EnemyMovementType.SweepIn)
     {
@@ -397,10 +396,20 @@ public class Enemy : MonoBehaviour
     }
   }
 
+  protected void WasDefeated()
+  {
+    _defeated = true;
+  }
+
+  protected void RemoveEnemyFromGame(float afterTime)
+  {
+    _spawnManager.RemoveEnemyFromGame(this, afterTime);
+  }
+
   protected virtual void DestroyEnemy()
   {
     _animator.SetTrigger("OnEnemyDeath");
-    _defeated = true;
+    WasDefeated();
     _speed = 0f;
     // TODO(Improvement): try to make this work in the future, at the moment it never gets to setting animFinished
     // as true.
@@ -410,7 +419,7 @@ public class Enemy : MonoBehaviour
       _audioSource.Play();
     }
     Destroy(GetComponent<Collider2D>());
-    Destroy(this.gameObject, 2.8f);
+    RemoveEnemyFromGame(2.8f);
   }
   
   // TODO(Improvement): This is a possible alternative way to play the death anim and destroy the

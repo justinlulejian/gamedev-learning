@@ -397,6 +397,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 578887006}
+  - component: {fileID: 578887007}
   m_Layer: 0
   m_Name: Enemy_Container
   m_TagString: Untagged
@@ -418,6 +419,18 @@ Transform:
   m_Father: {fileID: 1755951543}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &578887007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 578887005}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1f4df97bc780104f86618b25f5c8b7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &603370244
 GameObject:
   m_ObjectHideFlags: 0
@@ -1804,7 +1817,7 @@ MonoBehaviour:
     type: 3}
   _bossPrefab: {fileID: 4885091181775175149, guid: 949d418c18cebfd4a86e8daf508fee9b,
     type: 3}
-  _enemyContainer: {fileID: 578887005}
+  _enemyContainerObj: {fileID: 578887005}
   _powerupContainer: {fileID: 59167725}
   _powerups:
   - {fileID: 4482390072554363317, guid: 9125f82b871c5364aa6ff4d5a354cdd7, type: 3}
@@ -1827,7 +1840,7 @@ MonoBehaviour:
   _stopSpawning: 0
   _player: {fileID: 0}
   _uiManager: {fileID: 0}
-  _numberOfEnemyWavesRemaining: 1
+  _numberOfEnemyWavesRemaining: 6
   _difficulty: normal
 --- !u!1 &1983934739
 GameObject:

@@ -127,8 +127,8 @@ public class BossEnemy : Enemy
             _audioSource.Play();
         }
         Destroy(GetComponent<PolygonCollider2D>());
+        base.WasDefeated();
         this.gameObject.SetActive(false);
-        Destroy(this.gameObject, 2.8f);
         foreach (var weapon in _specialWeaponsActive)
         {
             if (weapon != null)
@@ -136,6 +136,7 @@ public class BossEnemy : Enemy
                 Destroy(weapon);
             }
         }
+        base.RemoveEnemyFromGame(2.8f);
     }
 
     private IEnumerator AttacksRoutine()

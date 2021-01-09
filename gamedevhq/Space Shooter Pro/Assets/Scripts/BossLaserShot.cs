@@ -1,11 +1,21 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class BossLaserShot : MonoBehaviour
 {
     private Vector3 _scaleIncrement = new Vector3(-0.05f, -0.05f, 0);
+    private AudioSource _shotAudio;
+
+
+    private void Start()
+    {
+        _shotAudio = this.transform.GetComponent<AudioSource>();
+        
+        if (_shotAudio == null) {
+            Debug.LogError("Shot audio source not found on boss laser shot.");
+        }
+        
+        _shotAudio.Play();
+    }
 
     void Update()
     {
@@ -16,5 +26,10 @@ public class BossLaserShot : MonoBehaviour
             _scaleIncrement = -_scaleIncrement;
         }
         
+    }
+
+    private void OnDestroy()
+    {
+        _shotAudio.Stop();
     }
 }
