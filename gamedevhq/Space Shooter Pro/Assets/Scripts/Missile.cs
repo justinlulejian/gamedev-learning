@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class Missile : MonoBehaviour
@@ -10,12 +7,22 @@ public class Missile : MonoBehaviour
     [SerializeField]
     private float _speed = 8f;
 
-    private GameObject _nearestEnemy = null;
-    private Enemy _nearestEnemyObj = null;
+    private Enemy _nearestEnemy = null;
     private int _nearestEnemyRespawnCount;
+
+    [SerializeField] 
+    private SpawnManager _spawnManager;
     
     void Start()
     {
+        _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
+        
+        
+        if (_spawnManager == null)
+        {
+            Debug.LogError("Couldn't find SpawnManager from Missile shot.");
+        }
+        
         FindNearEnemyAndRespawnCount();
     }
 
@@ -24,25 +31,23 @@ public class Missile : MonoBehaviour
         _nearestEnemy = FindNearestEnemy();
         if (_nearestEnemy != null)
         {
-            _nearestEnemyObj = _nearestEnemy.GetComponent<Enemy>();
-            _nearestEnemyRespawnCount = _nearestEnemyObj.GetRespawnCount();
+            _nearestEnemyRespawnCount = _nearestEnemy.GetRespawnCount();
         }
         // TODO(Improvement): Mark the enemy in some way that indicates it's the one being tracked by the
         // missile, a crosshair or something that matches the theme?
     }
     
-    // TODO(Improvement): Missiles should refind next nearest enemy has already been targeted by another
+    // TODO(Improvement): Missiles should refind next nearest enemy that hasn't already been targeted by another
     // missile/weapon.
-    private GameObject FindNearestEnemy()
+    private Enemy FindNearestEnemy()
     {
-        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
-        GameObject closestEnemy = null;
+        List<Enemy> enemies = _spawnManager.GetAllOnScreenEnemies();
+        Enemy closestEnemy = null;
         float distanceToClosestEnemy = Mathf.Infinity;
-        foreach (var enemy in enemies)
+        foreach (Enemy enemy in enemies)
         {
-            Enemy enemyObj = enemy.GetComponent<Enemy>();
             // Prevent missiles from moving towards enemy during death anim.
-            if (!enemyObj.IsDefeated())
+            if (!enemy.IsDefeated())
             {
                 float distanceToEnemy = Vector3.Distance(transform.position, enemy.transform.position);
                 if (distanceToEnemy < distanceToClosestEnemy)
@@ -104,7 +109,7 @@ public class Missile : MonoBehaviour
 
         // If the enemy respawns at the top of the screen re-find the nearest enemy so we don't track
         // the same enemy when it loops back to the top of the screen.
-        if (_nearestEnemyObj.GetRespawnCount() > _nearestEnemyRespawnCount)
+        if (_nearestEnemy.GetRespawnCount() > _nearestEnemyRespawnCount)
         {
             FindNearEnemyAndRespawnCount();
         }

@@ -10,7 +10,11 @@ public class SpawnManager : MonoBehaviour
   [SerializeField]
   private GameObject _enemyPrefab;
   [SerializeField]
-  private GameObject _enemyContainer;
+  private GameObject _bossPrefab;
+  [SerializeField]
+  private GameObject _enemyContainerObj;
+
+  private EnemyContainer _enemyContainer;
   // TODO(Improvement): Change the ammo pickup prefab to the ammo box sprite I have in the proj.
   [SerializeField]
   private GameObject _powerupContainer;
@@ -31,6 +35,7 @@ public class SpawnManager : MonoBehaviour
   
   // Enemy spawn logic.
   // Since we use Fibonacci to calculate, numbers beyond 6 get very high. 
+  // TODO(bug): Sometimes when _numberOfEnemyWavesRemaining == 1 there are two enemies/two waves that spawn?
   [SerializeField] 
   private int _numberOfEnemyWavesRemaining = 6;
   [SerializeField] 
@@ -49,6 +54,7 @@ public class SpawnManager : MonoBehaviour
     _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
     _player = GameObject.Find("Player").GetComponent<Player>();
     _powerupObjContainer = new List<Powerup>();
+    _enemyContainer = _enemyContainerObj.GetComponent<EnemyContainer>();
     
     if (_uiManager == null)
     {
@@ -57,6 +63,10 @@ public class SpawnManager : MonoBehaviour
     if (_player == null)
     {
       Debug.LogError("Player is null from SpawnManager.");
+    }
+    if (_enemyContainer == null)
+    {
+      Debug.LogError("Enemy container is null from SpawnManager.");
     }
   }
 
@@ -78,11 +88,16 @@ public class SpawnManager : MonoBehaviour
        * _difficultyToFactorMap[_difficulty]));
   }
 
+  private void SpawnBossWave()
+  {
+    _enemyContainer.AddEnemy(Instantiate(_bossPrefab));
+  }
+
   private IEnumerator SpawnEnemyRoutine()
   {
     while (_numberOfEnemyWavesRemaining > 0 && _stopSpawning == false)
     {
-      yield return new WaitUntil(() => _enemyContainer.transform.childCount == 0);
+      yield return new WaitUntil(() => _enemyContainer.NoEnemies());
 
       if (_stopSpawning)
       {
@@ -93,20 +108,28 @@ public class SpawnManager : MonoBehaviour
       int numberOfEnemiesToSpawnForWave = CalculateNumberOfEnemiesInWave(_enemyWaveNumber);
       while (numberOfEnemiesToSpawnForWave > 0)
       {
-        GameObject newEnemy = Instantiate(_enemyPrefab);
-        newEnemy.transform.parent = _enemyContainer.transform;
+        _enemyContainer.AddEnemy(Instantiate(_enemyPrefab));
         numberOfEnemiesToSpawnForWave--;
       }
 
       _enemyWaveNumber++;
     }
+
+    // Wait until the final wave have been cleared.
+    yield return new WaitUntil(() => _enemyContainer.NoEnemies());
+    if (_numberOfEnemyWavesRemaining == 0)
+    {
+      // TODO(Improvement): Change music to boss music on spawn, then play success music on win.
+      SpawnBossWave();
+    }
+    
     // Display win for player since all waves appear to be done, but only if Player survived.
-    yield return new WaitUntil(() => _enemyContainer.transform.childCount == 0 && !_player.IsDestroyed);
+    yield return new WaitUntil(() => _enemyContainer.NoEnemies() && !_player.IsDestroyed);
     _stopSpawning = true;
     DestroyEnemiesAndPowerUps();
     _uiManager.GameWinUI();
   }
-
+  
   private IEnumerator SpawnPowerupRoutine()
   {
     yield return new WaitForSeconds(3.0f);
@@ -148,6 +171,16 @@ public class SpawnManager : MonoBehaviour
   {
     return _powerupObjContainer;
   }
+  
+  public List<Enemy> GetAllOnScreenEnemies()
+  {
+    return _enemyContainer.GetEnemies();
+  }
+  
+  public void RemoveEnemyFromGame(Enemy enemy, float afterTime)
+  {
+    _enemyContainer.RemoveEnemy(enemy, afterTime);
+  }
 
   public void RemovePowerUpFromGame(Powerup powerUp)
   {
@@ -158,10 +191,8 @@ public class SpawnManager : MonoBehaviour
 
   private void DestroyEnemiesAndPowerUps()
   {
-    foreach (Transform enemy in _enemyContainer.transform)
-    {
-      Destroy(enemy.gameObject);
-    }
+    _enemyContainer.RemoveAllEnemies();
+    
     foreach (Transform powerUp in _powerupContainer.transform)
     {
       Destroy(powerUp.gameObject);

@@ -80,7 +80,11 @@ public class Player : MonoBehaviour
   [SerializeField] 
   private bool _isDestroyed = false;
 
-  [SerializeField] 
+  // TODO(Improvement): Combine with Enemy's impl?
+  private float _playerBossLaserCollideTimeTotal;
+  private float _playerCollideTimeRedamage = 1f;
+
+  [SerializeField]
   private int _ammoCount;
 
   private static int _maximumAmmoCount;
@@ -105,6 +109,7 @@ public class Player : MonoBehaviour
     _spedUpPlayerSpeed = _speed * _speedMultipler;
     _slowedDownPlayerSpeed = _speed / _speedMultipler;
    
+    // TODO: change this back once done with boss ai.
     transform.position = new Vector3(0, 0, 0);
     
     _uiManager.UpdateAmmoCount(GetCurrentAmmoCount());
@@ -277,14 +282,41 @@ public class Player : MonoBehaviour
     // turning off box colliders and rigidbodies on child laser and enabling both
     // on the parent object...
     // if (other.tag == "EnemyLaser")
-    if (other.tag == "Laser")
+    if (other.CompareTag("Laser"))
     {
       Laser laser = other.GetComponent<Laser>();
       if (laser != null && laser.IsEnemyLaser)
       {
         Damage();
       }
-    } 
+    }
+    if (other.CompareTag("BossLaser"))
+    {
+      Damage();
+    }
+    if (other.CompareTag("BossCircleShot"))
+    {
+      Damage();
+    }
+    
+  }
+  
+  private void OnTriggerStay2D(Collider2D other)
+  {
+    if (other.CompareTag("BossLaser"))
+    {
+      _playerBossLaserCollideTimeTotal += Time.deltaTime;
+      if (_playerBossLaserCollideTimeTotal >= _playerCollideTimeRedamage) 
+      {
+        Damage();
+        _playerBossLaserCollideTimeTotal = 0f;
+      }
+    }
+  }
+  
+  private void OnTriggerExit2D(Collider2D other)
+  {
+    _playerBossLaserCollideTimeTotal = 0f;
   }
 
   public void Damage()
