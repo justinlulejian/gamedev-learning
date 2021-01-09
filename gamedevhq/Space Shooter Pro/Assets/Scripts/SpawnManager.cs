@@ -134,7 +134,7 @@ public class SpawnManager : MonoBehaviour
   {
     yield return new WaitForSeconds(3.0f);
     
-    // TODO: Bug where powerup will still spawn if we're waiting while player death
+    // TODO(Bug): where powerup will still spawn if we're waiting while player death
     while (_stopSpawning == false)
     {
       float randomSpawnTime = Random.Range(3, 8);
