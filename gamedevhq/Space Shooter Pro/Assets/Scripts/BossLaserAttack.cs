@@ -15,8 +15,6 @@ public class BossLaserAttack : MonoBehaviour
     private float _totalTimeToCharge = 5f;
     private float _totalTimeToShoot = 3f;
     
-    // TODO: laser charge and shot need audio. Audio can loop indef inside scripts and get destroyed when they are.
-    
     void Start()
     {
         StartCoroutine(LaserChargeRoutine());
@@ -27,9 +25,7 @@ public class BossLaserAttack : MonoBehaviour
         GameObject laserChargeInstance = Instantiate(
             _laserChargePrefab, transform.position + new Vector3(0, -3, 0), Quaternion.identity);
         laserChargeInstance.transform.parent = this.transform;
-        // TODO: change back after debugging.
-        yield return new WaitForSeconds(1f);
-        // yield return new WaitForSeconds(_totalTimeToCharge);
+        yield return new WaitForSeconds(_totalTimeToCharge);
         Destroy(laserChargeInstance);   
         StartCoroutine(LaserShotRoutine());
     }

@@ -23,11 +23,6 @@ public class BossEnemy : Enemy
     private SpriteRenderer _spriteRenderer;
     private Collider2D _collider;
     
-    // TODO:
-    // If time: health bar that depletes over time, or just increasing number of damage sprites appended to it (enabled)
-    // For fun: switch music to boss/enemy music from star ocean (in downloads folder), will change in Audio_Manager?
-    
-    // Start is called before the first frame update
     void Start()
     {
         base.Start();
@@ -97,8 +92,7 @@ public class BossEnemy : Enemy
                 _damagePrefab, _collider.ClosestPoint(other.transform.position), Quaternion.identity);
         }
         
-        // TODO: do these both go to the same place?
-        OnTriggerEntered2D(other);
+        base.OnTriggerEntered2D(other);
     }
 
     protected override void PlayerDamageEnemy()
