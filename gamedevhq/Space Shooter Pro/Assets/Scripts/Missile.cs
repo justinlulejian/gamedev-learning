@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using ScriptExtensionMethods;
 
 public class Missile : MonoBehaviour
 {
@@ -117,10 +118,6 @@ public class Missile : MonoBehaviour
         transform.position = Vector3.MoveTowards(
             missileTransform.position, enemyTransform.position, _speed * Time.deltaTime);
         
-        // Rotate missile to point towards enemy. From http://answers.unity.com/comments/651932/view.html.
-        Vector3 vectorToTarget = enemyTransform.position - missileTransform.position;
-        float angle = (Mathf.Atan2(vectorToTarget.y, vectorToTarget.x) * Mathf.Rad2Deg) - 90;
-        Quaternion q = Quaternion.AngleAxis(angle, Vector3.forward);
-        transform.rotation = Quaternion.Slerp(missileTransform.rotation, q, Time.deltaTime * 20.0f);
+        ScriptExtensionMethods.MovementExtensions.RotateTowards(missileTransform, enemyTransform, 20f, 90f);
     }
 }

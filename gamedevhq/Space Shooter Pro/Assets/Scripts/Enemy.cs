@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using ScriptExtensionMethods;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 using Random = UnityEngine.Random;
@@ -16,10 +16,11 @@ public class Enemy : MonoBehaviour
   private float _fireRate = 3.0f;
   private bool _defeated = false;
   // How many times the enemy has respawned at the top of the screen after reaching the bottom.
-  private int _respawnCount = 0;  
-  
-  [SerializeField]
-  private float _speed = 4f;
+  private int _respawnCount = 0;
+
+  [SerializeField] 
+  private float _speed = 2f;
+  // private float _speed = 4f;
 
   private enum EnemyMovementType
   {
@@ -32,6 +33,13 @@ public class Enemy : MonoBehaviour
   private protected Vector3 _endPosition;
   private protected float _movementLerpTime = 1f;
   private protected float _movementCurrentLerpTime;
+
+  [SerializeField] 
+  private bool _aggroTowardsPlayer = false;
+  [SerializeField] 
+  private float _aggroRammingDistanceToPlayer = 10f;  // How close player must be for aggro enemy to attempt ramming.
+  private Vector3 _aggroRamVelocity = Vector3.zero;
+  private bool _aggroChasingPlayer = false;
   
   [SerializeField]
   private protected AudioSource _audioSource;
@@ -50,6 +58,8 @@ public class Enemy : MonoBehaviour
   // Staying collided longer than this time with enemy will redamage player.
   private const float _playerCollideTimeRedamage = .3f;
 
+  private SpriteRenderer _spriteRenderer;
+
   public bool IsDefeated()
   {
     return _defeated;
@@ -67,9 +77,18 @@ public class Enemy : MonoBehaviour
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
-    _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
-    _enemyMovementType = ChooseMovementType();
+    _shieldsPrefab.SetActive(false);
+    // _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
+    // _enemyMovementType = ChooseMovementType();
+    // TODO: If enemy chases/rams player but then player moves out of range then enemy will snap back to sweep path
+    // unnaturally. Might need to change that method so it dynamically calcs from current position? Maybe change to
+    // smoothdamp from lerp?
+    _enemyMovementType = EnemyMovementType.SweepIn;
     _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
+    _aggroTowardsPlayer = true;
+    // _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
+    _spriteRenderer = this.GetComponent<SpriteRenderer>();
+    
     if (_enemyMovementType == EnemyMovementType.SweepIn)
     {
       _endPosition = CalculateNewSweepEndPosition(_startPosition);
@@ -77,6 +96,7 @@ public class Enemy : MonoBehaviour
     transform.position = _startPosition;
     transform.rotation = Quaternion.identity;
     StartCoroutine(FireOnPowerUpsAndPlayerBehindRoutine());
+    StartCoroutine(AggroEnemySpriteColorRoutine());
 
     // TODO(?): Is !obj same as == null?
     if (!_player)
@@ -103,6 +123,10 @@ public class Enemy : MonoBehaviour
     if (_shieldsPrefab == null)
     {
       Debug.LogError("_shieldsPrefab was null when creating enemy");
+    }
+    if (_spriteRenderer == null)
+    {
+      Debug.LogError("Sprite renderer was null when creating enemy");
     }
   }
   
@@ -152,8 +176,67 @@ public class Enemy : MonoBehaviour
     return startPosition;
   }
 
+  private bool WithinRammingDistanceToPlayer()
+  {
+    float distanceToPlayer = Vector3.Distance(
+      this.transform.position, _player.transform.position);
+    // Debug.Log($"distanceToPlayer: {distanceToPlayer.ToString()}");
+    // Debug.Log($"_aggroRammingDistanceToPlayer: {_aggroRammingDistanceToPlayer.ToString()}");
+    if (distanceToPlayer <= _aggroRammingDistanceToPlayer)
+    {
+      // Debug.Log("Enemy within ramming distance.");
+      return true;
+    }
+    // Debug.Log("Enemy not within ramming distance.");
+    return false;
+  }
+
+  // Blink the enemy red when chasing aggro to show status.
+  private IEnumerator AggroEnemySpriteColorRoutine()
+  {
+    while (true)
+    {
+      while (_aggroChasingPlayer && !IsDefeated()) 
+      {
+        Debug.Log("Chaning color of enemy to red.");
+        _spriteRenderer.color = Color.red;
+        yield return new WaitForSeconds(.1f);
+        Debug.Log("Changing color of enemy to white.");
+        _spriteRenderer.color = Color.white;
+        yield return new WaitForSeconds(.1f);
+      }
+      // Either we haven't been aggro yet, enemy is out of aggro range, or it's been destroyed so we reset color to
+      // ensure they don't stay red.
+      _spriteRenderer.color = Color.white;
+      yield return new WaitUntil(() => _aggroChasingPlayer == true);
+    }
+}
+
+  private void AttemptRamPlayer()
+  {
+    // Rotate towards player. -90 angle since enemy forward orientation is upwards on the game screen.
+    MovementExtensions.RotateTowards(this.transform, _player.transform, 10f, -90f);
+    
+    // TODO: enemy if they ram and respawn will continue on the same path as they did before at that angle...
+    // "Ram" move towards player to attempt collision.
+    transform.position =
+      Vector3.SmoothDamp(
+        transform.position, _player.transform.position, ref _aggroRamVelocity, 2f);  // .75f damp
+  }
+
   private void CalculateMovement()
   {
+    Debug.Log($"_aggroTowardsPlayer: {_aggroTowardsPlayer.ToString()}");
+    if (_aggroTowardsPlayer && WithinRammingDistanceToPlayer())
+    {
+      _aggroChasingPlayer = true;
+      Debug.Log("Attempting to ram player");
+      AttemptRamPlayer();
+      return;
+    }
+    // Reset chasing status and orientation to default if player goes out of range of aggro ramming.
+    _aggroChasingPlayer = false;
+    MovementExtensions.RotateTowardsQuaternion(this.transform, Quaternion.identity, 10f);
     switch (_enemyMovementType)
     { 
       case EnemyMovementType.StraightDown:
@@ -175,6 +258,7 @@ public class Enemy : MonoBehaviour
       // Respawn back at the top of the screen.
       float randomX = Random.Range(-8f, 8f);
       transform.position = new Vector3(randomX, 7, 0);
+      transform.rotation = Quaternion.identity;
       _respawnCount++;
     }
   }
