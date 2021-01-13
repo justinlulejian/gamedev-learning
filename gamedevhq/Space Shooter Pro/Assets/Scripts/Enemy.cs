@@ -80,8 +80,7 @@ public class Enemy : MonoBehaviour
     _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
     _enemyMovementType = ChooseMovementType();
     _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
-    _aggroTowardsPlayer = true;
-    // _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
+    _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
     _spriteRenderer = this.GetComponent<SpriteRenderer>();
     
     if (_enemyMovementType == EnemyMovementType.SweepIn)
