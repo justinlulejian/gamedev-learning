@@ -19,8 +19,7 @@ public class Enemy : MonoBehaviour
   private int _respawnCount = 0;
 
   [SerializeField] 
-  private float _speed = 2f;
-  // private float _speed = 4f;
+  private float _speed = 4f;
 
   private enum EnemyMovementType
   {
@@ -35,11 +34,11 @@ public class Enemy : MonoBehaviour
   private protected float _movementCurrentLerpTime;
 
   [SerializeField] 
-  private bool _aggroTowardsPlayer = false;
+  private bool _aggroTowardsPlayer;
   [SerializeField] 
-  private float _aggroRammingDistanceToPlayer = 10f;  // How close player must be for aggro enemy to attempt ramming.
+  private float _aggroRammingDistanceToPlayer = 5f;  // How close player must be for aggro enemy to attempt ramming.
   private Vector3 _aggroRamVelocity = Vector3.zero;
-  private bool _aggroChasingPlayer = false;
+  private bool _aggroChasingPlayer;
   
   [SerializeField]
   private protected AudioSource _audioSource;
@@ -70,7 +69,7 @@ public class Enemy : MonoBehaviour
     return _respawnCount;
   }
   
-  protected void Start()
+  protected virtual void Start()
   {
     _player = GameObject.Find("Player").GetComponent<Player>();
     _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
@@ -78,12 +77,8 @@ public class Enemy : MonoBehaviour
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
     _shieldsPrefab.SetActive(false);
-    // _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
-    // _enemyMovementType = ChooseMovementType();
-    // TODO: If enemy chases/rams player but then player moves out of range then enemy will snap back to sweep path
-    // unnaturally. Might need to change that method so it dynamically calcs from current position? Maybe change to
-    // smoothdamp from lerp?
-    _enemyMovementType = EnemyMovementType.SweepIn;
+    _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
+    _enemyMovementType = ChooseMovementType();
     _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
     _aggroTowardsPlayer = true;
     // _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
@@ -178,17 +173,8 @@ public class Enemy : MonoBehaviour
 
   private bool WithinRammingDistanceToPlayer()
   {
-    float distanceToPlayer = Vector3.Distance(
-      this.transform.position, _player.transform.position);
-    // Debug.Log($"distanceToPlayer: {distanceToPlayer.ToString()}");
-    // Debug.Log($"_aggroRammingDistanceToPlayer: {_aggroRammingDistanceToPlayer.ToString()}");
-    if (distanceToPlayer <= _aggroRammingDistanceToPlayer)
-    {
-      // Debug.Log("Enemy within ramming distance.");
-      return true;
-    }
-    // Debug.Log("Enemy not within ramming distance.");
-    return false;
+   return Vector3.Distance(
+      this.transform.position, _player.transform.position) <= _aggroRammingDistanceToPlayer;
   }
 
   // Blink the enemy red when chasing aggro to show status.
@@ -198,10 +184,8 @@ public class Enemy : MonoBehaviour
     {
       while (_aggroChasingPlayer && !IsDefeated()) 
       {
-        Debug.Log("Chaning color of enemy to red.");
         _spriteRenderer.color = Color.red;
         yield return new WaitForSeconds(.1f);
-        Debug.Log("Changing color of enemy to white.");
         _spriteRenderer.color = Color.white;
         yield return new WaitForSeconds(.1f);
       }
@@ -217,26 +201,39 @@ public class Enemy : MonoBehaviour
     // Rotate towards player. -90 angle since enemy forward orientation is upwards on the game screen.
     MovementExtensions.RotateTowards(this.transform, _player.transform, 10f, -90f);
     
-    // TODO: enemy if they ram and respawn will continue on the same path as they did before at that angle...
     // "Ram" move towards player to attempt collision.
     transform.position =
       Vector3.SmoothDamp(
-        transform.position, _player.transform.position, ref _aggroRamVelocity, 2f);  // .75f damp
+        transform.position, _player.transform.position, ref _aggroRamVelocity, .75f);
   }
 
   private void CalculateMovement()
   {
-    Debug.Log($"_aggroTowardsPlayer: {_aggroTowardsPlayer.ToString()}");
     if (_aggroTowardsPlayer && WithinRammingDistanceToPlayer())
     {
       _aggroChasingPlayer = true;
-      Debug.Log("Attempting to ram player");
       AttemptRamPlayer();
       return;
+    // Being here means we were just chasing player, but are no longer since we're not within ramming distance anymore.  
+    } else if (_aggroTowardsPlayer && _aggroChasingPlayer)
+    {
+      // Reset chasing status and orientation to default if player goes out of range of aggro ramming.
+      _aggroChasingPlayer = false;
+      _aggroRamVelocity = Vector3.zero;
+      // Reset values used for movement so they can continue to move more naturally as they were before chasing.
+      _movementCurrentLerpTime = 0f;
+      // TODO(Improvement): I can't think of a good way to continue a EnemyMovementType.SweepIn movement after stopping
+      // chasing so for now let's just have them continue down. Would be better to recalc and SweepIn to a new natural
+      // point to be consistent.
+      _enemyMovementType = EnemyMovementType.StraightDown;
     }
-    // Reset chasing status and orientation to default if player goes out of range of aggro ramming.
-    _aggroChasingPlayer = false;
-    MovementExtensions.RotateTowardsQuaternion(this.transform, Quaternion.identity, 10f);
+
+    // If the player has been rotated by chasing, return them back to original rotation.
+    if (!this.transform.rotation.Equals(Quaternion.identity))
+    {
+      MovementExtensions.RotateTowardsQuaternion(this.transform, Quaternion.identity, 10f);
+    }
+    
     switch (_enemyMovementType)
     { 
       case EnemyMovementType.StraightDown:
@@ -267,7 +264,7 @@ public class Enemy : MonoBehaviour
   {
     // Inspiration from https://chicounity3d.wordpress.com/2014/05/23/how-to-lerp-like-a-pro/.
     // TODO(Improvement): Without dividing by some value, Time.deltaTime increases too quickly and causes the enemy to
-    // move to fast in comparison to other movement types. 15f is an arbitrary values that slowed it down, but more
+    // move too fast in comparison to other movement types. 15f is an arbitrary values that slowed it down, but more
     // thought could be used here on how to mathematically make the speeds similar across movement types.
     // Perhaps increase _movementlerpTime inversely with speed?
     _movementCurrentLerpTime += ((Time.deltaTime / 15f) * _speed);  
@@ -280,7 +277,7 @@ public class Enemy : MonoBehaviour
       _respawnCount++;
       return;
     }
- 
+  
     float interpValue = _movementCurrentLerpTime / _movementLerpTime;
     interpValue = Mathf.Sin(interpValue * Mathf.PI * 0.5f);  // "sinerp"
     transform.position = Vector3.Lerp(_startPosition, _endPosition, interpValue);
