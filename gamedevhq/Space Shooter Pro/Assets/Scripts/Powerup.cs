@@ -46,7 +46,7 @@ public class Powerup : MonoBehaviour
     }
   }
 
-  protected void Update()
+  protected virtual void Update()
   {
     if (_playerCollecting)
     {

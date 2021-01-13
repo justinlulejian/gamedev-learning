@@ -7,7 +7,7 @@ public class ShotgunShotPowerup : Powerup
 {
     private Vector3 _scaleIncrement = new Vector3(-0.05f, -0.05f, 0);
 
-    void Update()
+    protected override void Update()
     {
         // Grow/shrink sprite as an animation.
         transform.localScale += _scaleIncrement;
