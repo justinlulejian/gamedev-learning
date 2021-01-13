@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using ScriptExtensionMethods;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 using Random = UnityEngine.Random;
@@ -16,9 +16,9 @@ public class Enemy : MonoBehaviour
   private float _fireRate = 3.0f;
   private bool _defeated = false;
   // How many times the enemy has respawned at the top of the screen after reaching the bottom.
-  private int _respawnCount = 0;  
-  
-  [SerializeField]
+  private int _respawnCount = 0;
+
+  [SerializeField] 
   private float _speed = 4f;
 
   private enum EnemyMovementType
@@ -32,6 +32,13 @@ public class Enemy : MonoBehaviour
   private protected Vector3 _endPosition;
   private protected float _movementLerpTime = 1f;
   private protected float _movementCurrentLerpTime;
+
+  [SerializeField] 
+  private bool _aggroTowardsPlayer;
+  [SerializeField] 
+  private float _aggroRammingDistanceToPlayer = 5f;  // How close player must be for aggro enemy to attempt ramming.
+  private Vector3 _aggroRamVelocity = Vector3.zero;
+  private bool _aggroChasingPlayer;
   
   [SerializeField]
   private protected AudioSource _audioSource;
@@ -50,6 +57,8 @@ public class Enemy : MonoBehaviour
   // Staying collided longer than this time with enemy will redamage player.
   private const float _playerCollideTimeRedamage = .3f;
 
+  private SpriteRenderer _spriteRenderer;
+
   public bool IsDefeated()
   {
     return _defeated;
@@ -60,16 +69,21 @@ public class Enemy : MonoBehaviour
     return _respawnCount;
   }
   
-  protected void Start()
+  protected virtual void Start()
   {
     _player = GameObject.Find("Player").GetComponent<Player>();
     _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
+    _shieldsPrefab.SetActive(false);
     _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
     _enemyMovementType = ChooseMovementType();
     _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
+    _aggroTowardsPlayer = true;
+    // _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
+    _spriteRenderer = this.GetComponent<SpriteRenderer>();
+    
     if (_enemyMovementType == EnemyMovementType.SweepIn)
     {
       _endPosition = CalculateNewSweepEndPosition(_startPosition);
@@ -77,6 +91,7 @@ public class Enemy : MonoBehaviour
     transform.position = _startPosition;
     transform.rotation = Quaternion.identity;
     StartCoroutine(FireOnPowerUpsAndPlayerBehindRoutine());
+    StartCoroutine(AggroEnemySpriteColorRoutine());
 
     // TODO(?): Is !obj same as == null?
     if (!_player)
@@ -103,6 +118,10 @@ public class Enemy : MonoBehaviour
     if (_shieldsPrefab == null)
     {
       Debug.LogError("_shieldsPrefab was null when creating enemy");
+    }
+    if (_spriteRenderer == null)
+    {
+      Debug.LogError("Sprite renderer was null when creating enemy");
     }
   }
   
@@ -152,8 +171,69 @@ public class Enemy : MonoBehaviour
     return startPosition;
   }
 
+  private bool WithinRammingDistanceToPlayer()
+  {
+   return Vector3.Distance(
+      this.transform.position, _player.transform.position) <= _aggroRammingDistanceToPlayer;
+  }
+
+  // Blink the enemy red when chasing aggro to show status.
+  private IEnumerator AggroEnemySpriteColorRoutine()
+  {
+    while (true)
+    {
+      while (_aggroChasingPlayer && !IsDefeated()) 
+      {
+        _spriteRenderer.color = Color.red;
+        yield return new WaitForSeconds(.1f);
+        _spriteRenderer.color = Color.white;
+        yield return new WaitForSeconds(.1f);
+      }
+      // Either we haven't been aggro yet, enemy is out of aggro range, or it's been destroyed so we reset color to
+      // ensure they don't stay red.
+      _spriteRenderer.color = Color.white;
+      yield return new WaitUntil(() => _aggroChasingPlayer == true);
+    }
+}
+
+  private void AttemptRamPlayer()
+  {
+    // Rotate towards player. -90 angle since enemy forward orientation is upwards on the game screen.
+    MovementExtensions.RotateTowards(this.transform, _player.transform, 10f, -90f);
+    
+    // "Ram" move towards player to attempt collision.
+    transform.position =
+      Vector3.SmoothDamp(
+        transform.position, _player.transform.position, ref _aggroRamVelocity, .75f);
+  }
+
   private void CalculateMovement()
   {
+    if (_aggroTowardsPlayer && WithinRammingDistanceToPlayer())
+    {
+      _aggroChasingPlayer = true;
+      AttemptRamPlayer();
+      return;
+    // Being here means we were just chasing player, but are no longer since we're not within ramming distance anymore.  
+    } else if (_aggroTowardsPlayer && _aggroChasingPlayer)
+    {
+      // Reset chasing status and orientation to default if player goes out of range of aggro ramming.
+      _aggroChasingPlayer = false;
+      _aggroRamVelocity = Vector3.zero;
+      // Reset values used for movement so they can continue to move more naturally as they were before chasing.
+      _movementCurrentLerpTime = 0f;
+      // TODO(Improvement): I can't think of a good way to continue a EnemyMovementType.SweepIn movement after stopping
+      // chasing so for now let's just have them continue down. Would be better to recalc and SweepIn to a new natural
+      // point to be consistent.
+      _enemyMovementType = EnemyMovementType.StraightDown;
+    }
+
+    // If the player has been rotated by chasing, return them back to original rotation.
+    if (!this.transform.rotation.Equals(Quaternion.identity))
+    {
+      MovementExtensions.RotateTowardsQuaternion(this.transform, Quaternion.identity, 10f);
+    }
+    
     switch (_enemyMovementType)
     { 
       case EnemyMovementType.StraightDown:
@@ -175,6 +255,7 @@ public class Enemy : MonoBehaviour
       // Respawn back at the top of the screen.
       float randomX = Random.Range(-8f, 8f);
       transform.position = new Vector3(randomX, 7, 0);
+      transform.rotation = Quaternion.identity;
       _respawnCount++;
     }
   }
@@ -183,7 +264,7 @@ public class Enemy : MonoBehaviour
   {
     // Inspiration from https://chicounity3d.wordpress.com/2014/05/23/how-to-lerp-like-a-pro/.
     // TODO(Improvement): Without dividing by some value, Time.deltaTime increases too quickly and causes the enemy to
-    // move to fast in comparison to other movement types. 15f is an arbitrary values that slowed it down, but more
+    // move too fast in comparison to other movement types. 15f is an arbitrary values that slowed it down, but more
     // thought could be used here on how to mathematically make the speeds similar across movement types.
     // Perhaps increase _movementlerpTime inversely with speed?
     _movementCurrentLerpTime += ((Time.deltaTime / 15f) * _speed);  
@@ -196,7 +277,7 @@ public class Enemy : MonoBehaviour
       _respawnCount++;
       return;
     }
- 
+  
     float interpValue = _movementCurrentLerpTime / _movementLerpTime;
     interpValue = Mathf.Sin(interpValue * Mathf.PI * 0.5f);  // "sinerp"
     transform.position = Vector3.Lerp(_startPosition, _endPosition, interpValue);

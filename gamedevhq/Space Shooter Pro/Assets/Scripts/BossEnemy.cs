@@ -20,25 +20,20 @@ public class BossEnemy : Enemy
     [SerializeField] 
     private int _bossLives = 10;
 
-    private SpriteRenderer _spriteRenderer;
     private Collider2D _collider;
     
-    void Start()
+    protected override void Start()
     {
         base.Start();
         // Spawn off screen.
         _startPosition = transform.position = new Vector3(0, 8, 0);
         // Middle-ish of screen.
        _endPosition = new Vector3(0, 2.5f, 0);
-       _spriteRenderer = this.GetComponent<SpriteRenderer>();
        _collider = this.GetComponent<Collider2D>();
        // Causes the boss to move slower to _endPosition.
        _movementLerpTime = 7f;
        _specialWeaponsActive = new List<GameObject>();
        
-       if (_spriteRenderer == null) {
-           Debug.LogError("Sprite renderer for boss is null.");
-       }
        if (_collider == null) {
            Debug.LogError("Collider for boss is null.");
        }
@@ -165,6 +160,5 @@ public class BossEnemy : Enemy
                 }
             }
         }
-        yield return null;
     }
 }
