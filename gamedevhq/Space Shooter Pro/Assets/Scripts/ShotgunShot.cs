@@ -73,7 +73,7 @@ public class ShotgunShot : MonoBehaviour
         // Enemy object can destroy shot so this avoid a ref exception trying to move
         // a destroyed object.
         // TODO(Improvement): Could I restructure to avoid this null check on every update
-        // loop? 
+        // loop? Maybe add as child objects instead?
         if (shot == null)
         {
             shotsRemaining.Remove(shot);
@@ -87,5 +87,26 @@ public class ShotgunShot : MonoBehaviour
             Destroy(shot);
             shotsRemaining.Remove(shot);
         }
+    }
+
+    public List<GameObject> GetShotgunShots()
+    {
+        List<GameObject> _existentShotgunShots = new List<GameObject>();
+        // TODO: Test what happens in calling code when one of the shotguns shots is destroyed, is it really not
+        // sent to caller?
+        if (leftShot)
+        {
+            _existentShotgunShots.Add(leftShot);
+        }
+        if (frontShot)
+        {
+            _existentShotgunShots.Add(frontShot);
+        }
+        if (rightShot)
+        {
+            _existentShotgunShots.Add(rightShot);
+        }
+
+        return _existentShotgunShots;
     }
 }

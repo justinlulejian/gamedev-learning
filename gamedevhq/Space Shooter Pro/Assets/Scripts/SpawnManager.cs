@@ -8,6 +8,7 @@ using Random = UnityEngine.Random;
 public class SpawnManager : MonoBehaviour
 {
   [SerializeField]
+  // TODO: Change this back to Enemy and impl random selection when done with avoid enemy functionality.
   private GameObject _enemyPrefab;
   [SerializeField]
   private GameObject _bossPrefab;

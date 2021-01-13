@@ -18,6 +18,8 @@ public class Player : MonoBehaviour
   private GameObject _missilePrefab;
   [SerializeField]
   private GameObject _shotgunPrefab;
+  [SerializeField] 
+  private GameObject _projectileContainer;
   [SerializeField]
   private float _fireRate = 0.15f;
   private float _canFire = -1f;
@@ -137,6 +139,9 @@ public class Player : MonoBehaviour
     if (_explosionPrefab == null) {
       Debug.LogError("explosionPrefab is null when creating player.");
     }
+    if (_projectileContainer == null) {
+      Debug.LogError("Projectile container is null when creating player.");
+    }
   }
 
   private void Update()
@@ -229,21 +234,28 @@ public class Player : MonoBehaviour
     if (_isTripleShotActive)
     {
       GameObject tripleShot = InstantiatePrefabAndPlayAudioClip(_tripleShotPrefab, _laserAudioClip);
-      foreach (Laser laser in tripleShot.GetComponentsInChildren<Laser>())
+      foreach (GameObject laser in tripleShot.GetComponent<TripleShot>().GetChildLasers())
       {
-        laser.LaserDirection= Vector3.up;
+        laser.GetComponent<Laser>().LaserDirection = Vector3.up;
+        // Adding projectiles as children works fine for now since they're 
+        laser.transform.parent = _projectileContainer.transform;
       }
       return;
     } else if (_isMissleShotActive)
     {
-      InstantiatePrefabAndPlayAudioClip(
+      GameObject missileShot = InstantiatePrefabAndPlayAudioClip(
         _missilePrefab, _missileAudioClip, positionOffset:new Vector3(0, 1f, 0));
+      missileShot.transform.parent = _projectileContainer.transform;
       return;
     }
     else if (_isShotgunShotActive)
     {
-      InstantiatePrefabAndPlayAudioClip(
+      GameObject _shotgunShot = InstantiatePrefabAndPlayAudioClip(
         _shotgunPrefab, _shotgunAudioClip, positionOffset:new Vector3(0, 1f, 0));
+      foreach (GameObject shotgunShot in _shotgunShot.GetComponent<ShotgunShot>().GetShotgunShots())
+      {
+        _shotgunShot.transform.parent = _projectileContainer.transform;
+      }
       return;
     }
     
@@ -253,8 +265,23 @@ public class Player : MonoBehaviour
       GameObject laser = InstantiatePrefabAndPlayAudioClip(
         _laserPrefab, _laserAudioClip, positionOffset: new Vector3(0, 1.05f, 0));
       laser.GetComponent<Laser>().LaserDirection = Vector3.up;
+      laser.transform.parent = _projectileContainer.transform;
       ReduceAmmoCount();
     }
+  }
+
+  public List<Transform> GetProjectileTransforms()
+  {
+    List<Transform> projectiles = new List<Transform>();
+    for (int i = 0; i < _projectileContainer.transform.childCount; i++)
+    {
+      Transform projectile = _projectileContainer.transform.GetChild(i);
+      if (projectile)
+      {
+        projectiles.Add(projectile);
+      }
+    }
+    return projectiles;
   }
 
   private GameObject InstantiatePrefabAndPlayAudioClip(

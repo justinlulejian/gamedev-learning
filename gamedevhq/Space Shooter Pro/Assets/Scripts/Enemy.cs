@@ -130,9 +130,9 @@ public class Enemy : MonoBehaviour
     return new Vector3(startPosition.x * -1f, Random.Range(startPosition.y - 2f, -6.5f), startPosition.z);
   }
 
-  void Update()
+  protected virtual void Update()
   {
-    // When destorying enemies _speed is set to 0 which causes movement to be weird for some movement types. 
+    // When destroying enemies _speed is set to 0 which causes movement to be weird for some movement types. 
     if (IsDefeated())
     {
       return;
@@ -206,7 +206,7 @@ public class Enemy : MonoBehaviour
         transform.position, _player.transform.position, ref _aggroRamVelocity, .75f);
   }
 
-  private void CalculateMovement()
+  protected virtual void CalculateMovement()
   {
     if (_aggroTowardsPlayer && WithinRammingDistanceToPlayer())
     {
