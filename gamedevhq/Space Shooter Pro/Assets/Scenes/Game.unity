@@ -911,6 +911,49 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1121866216
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1121866217}
+  - component: {fileID: 1121866218}
+  m_Layer: 0
+  m_Name: Weapon_Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1121866217
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1121866216}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.1610049, y: 2.8377862, z: -0.5439453}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 12
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1121866218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1121866216}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2180ee559cb79c544b1d1d4dad7bd754, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1139662618
 GameObject:
   m_ObjectHideFlags: 0
@@ -2035,7 +2078,6 @@ MonoBehaviour:
     type: 3}
   _shotgunPrefab: {fileID: 7851593113333382897, guid: 0b783584d6e840e4a8a2c39737202495,
     type: 3}
-  _projectileContainer: {fileID: 437602704}
   _fireRate: 0.15
   _thrusterTimeSeconds: 5
   _lives: 3
@@ -2462,12 +2504,12 @@ PrefabInstance:
     - target: {fileID: 4276623834322039270, guid: 59f80ac5dba88a840b1a3fef85a4cccd,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.03
+      value: -3.55
       objectReference: {fileID: 0}
     - target: {fileID: 4276623834322039270, guid: 59f80ac5dba88a840b1a3fef85a4cccd,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 6.96
+      value: 5.23
       objectReference: {fileID: 0}
     - target: {fileID: 4276623834322039270, guid: 59f80ac5dba88a840b1a3fef85a4cccd,
         type: 3}
@@ -2519,6 +2561,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: Avoid_Shot_Enemy
       objectReference: {fileID: 0}
+    - target: {fileID: 4276623834322039275, guid: 59f80ac5dba88a840b1a3fef85a4cccd,
+        type: 3}
+      propertyPath: _speed
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4276623834322039275, guid: 59f80ac5dba88a840b1a3fef85a4cccd,
+        type: 3}
+      propertyPath: _laserPrefab
+      value: 
+      objectReference: {fileID: 6688453021566434972, guid: 5b6ca788de60e714b927e1c3cb6e12cc,
+        type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 59f80ac5dba88a840b1a3fef85a4cccd, type: 3}
 --- !u!1 &5199787725588764568

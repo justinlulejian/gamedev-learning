@@ -138,7 +138,7 @@ public class Enemy : MonoBehaviour
       return;
     }
     CalculateMovement();
-    PeriodicFireLasers();
+    // PeriodicFireLasers();
   }
 
   private EnemyMovementType ChooseMovementType()
@@ -244,7 +244,7 @@ public class Enemy : MonoBehaviour
     }
   }
 
-  private void StraightDownMovement()
+  protected virtual void StraightDownMovement()
   {
     Vector3 moveShip = Vector3.down * (_speed * Time.deltaTime);
     transform.Translate(moveShip);
@@ -487,7 +487,7 @@ public class Enemy : MonoBehaviour
 
   protected virtual void DestroyEnemy()
   {
-    _animator.SetTrigger("OnEnemyDeath");
+    // _animator.SetTrigger("OnEnemyDeath");
     WasDefeated();
     _speed = 0f;
     // TODO(Improvement): try to make this work in the future, at the moment it never gets to setting animFinished
@@ -498,7 +498,8 @@ public class Enemy : MonoBehaviour
       _audioSource.Play();
     }
     Destroy(GetComponent<Collider2D>());
-    RemoveEnemyFromGame(2.8f);
+    RemoveEnemyFromGame(0f);
+    // RemoveEnemyFromGame(2.8f);
   }
   
   // TODO(Improvement): This is a possible alternative way to play the death anim and destroy the

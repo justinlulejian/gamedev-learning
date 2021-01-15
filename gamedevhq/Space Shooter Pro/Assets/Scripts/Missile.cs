@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
+using DefaultNamespace;
 using UnityEngine;
 using ScriptExtensionMethods;
 
-public class Missile : MonoBehaviour
+public class Missile : PlayerProjectile
 {
     
     [SerializeField]

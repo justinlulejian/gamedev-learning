@@ -1,9 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DefaultNamespace;
 using UnityEngine;
 
-public class TripleShot : MonoBehaviour
+public class TripleShot : PlayerProjectile
 {
     private List<GameObject> _childLasers = new List<GameObject>();
     // Start is called before the first frame update

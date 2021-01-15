@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using DefaultNamespace;
 using UnityEngine;
 
-public class ShotgunShot : MonoBehaviour
+public class ShotgunShot : PlayerProjectile
 {
     [SerializeField]
     private float _speed = 4.0f;
@@ -108,5 +109,13 @@ public class ShotgunShot : MonoBehaviour
         }
 
         return _existentShotgunShots;
+    }
+
+    protected override void OnDestroy()
+    {
+        foreach (GameObject shotgunShot in GetShotgunShots())
+        {
+            _weaponManager.RemovePlayerShot(shotgunShot.transform);
+        }
     }
 }

@@ -369,9 +369,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1726d1c423877064d8d79a44272dc16e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _laserPrefab: {fileID: 0}
+  _laserPrefab: {fileID: 6688453021566434972, guid: 5b6ca788de60e714b927e1c3cb6e12cc,
+    type: 3}
   _speed: 4
   _aggroTowardsPlayer: 0
   _aggroRammingDistanceToPlayer: 5
-  _audioSource: {fileID: 0}
-  _shieldsPrefab: {fileID: 0}
+  _audioSource: {fileID: 8045472991305539007}
+  _shieldsPrefab: {fileID: 700511071687347765, guid: 838062af32bd8344890381ddeccbffc9,
+    type: 3}
+  _avoidDistanceTrigger: 5
