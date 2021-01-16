@@ -19,8 +19,9 @@ public class ShotgunShot : PlayerProjectile
     private List<GameObject> shotsRemaining;
     private Dictionary<GameObject, Vector3> shotsToDirection;
 
-    private void Start()
+    protected override void Start()
     {
+        base.Start();
         if (shotPrefab == null)
         {
             Debug.LogError("ShotgunShot shot prefab appears to not be assigned.");

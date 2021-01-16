@@ -77,10 +77,12 @@ public class Enemy : MonoBehaviour
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
     _shieldsPrefab.SetActive(false);
-    _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
-    _enemyMovementType = ChooseMovementType();
+    // _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
+    // _enemyMovementType = ChooseMovementType();
+    _enemyMovementType = EnemyMovementType.StraightDown;
     _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
-    _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
+    // _startPosition = new Vector3(0, 5f, 0);
+    // _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
     _spriteRenderer = this.GetComponent<SpriteRenderer>();
     
     if (_enemyMovementType == EnemyMovementType.SweepIn)

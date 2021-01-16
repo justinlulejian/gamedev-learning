@@ -32,7 +32,7 @@ public class Asteroid : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Laser"))
+        if (other.CompareTag("Laser") || other.CompareTag("Missile") || other.CompareTag("ShotgunShot"))
         {
             Instantiate(_explosionPrefab, transform.position, Quaternion.identity);
             Destroy(other.gameObject);
@@ -45,8 +45,8 @@ public class Asteroid : MonoBehaviour
     {
         if (_spawnManager == null)
         {
-            Debug.LogError("Spawnmanager was null in Asteroid onDestroy not calling start" +
-                           " spawning");
+            Debug.Log("Spawnmanager was null in Asteroid onDestroy not calling start" +
+                           " spawning. May be due to unexpected scene end.");
             return;
         }
         _spawnManager.StartSpawning();

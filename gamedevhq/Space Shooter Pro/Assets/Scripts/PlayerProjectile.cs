@@ -5,7 +5,7 @@ namespace DefaultNamespace
     public class PlayerProjectile : MonoBehaviour
     {
         protected WeaponManager _weaponManager;
-        private void Start()
+        protected virtual void Start()
         {
             _weaponManager = GameObject.Find("Weapon_Manager").GetComponent<WeaponManager>();
             if (_weaponManager == null) {

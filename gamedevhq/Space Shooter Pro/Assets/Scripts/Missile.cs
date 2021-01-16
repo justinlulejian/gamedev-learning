@@ -14,11 +14,11 @@ public class Missile : PlayerProjectile
 
     [SerializeField] 
     private SpawnManager _spawnManager;
-    
-    void Start()
+
+    protected override void Start()
     {
+        base.Start();
         _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
-        
         
         if (_spawnManager == null)
         {

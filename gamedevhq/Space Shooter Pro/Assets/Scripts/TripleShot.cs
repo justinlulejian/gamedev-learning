@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using DefaultNamespace;
@@ -6,19 +6,18 @@ using UnityEngine;
 
 public class TripleShot : PlayerProjectile
 {
-    private List<GameObject> _childLasers = new List<GameObject>();
-    // Start is called before the first frame update
-    void Start()
+    public List<Laser> GetChildLasers()
     {
-        _childLasers = this.gameObject.GetComponentsInChildren<GameObject>().ToList();
-    }
-
-    public List<GameObject> GetChildLasers()
-    {
+        // TODO(Improvement): This is somewhat inefficient since it can be called via Update from Player, however I
+        // I can't move this to Start since this Start get's called after the Player's Update loop has finished because
+        // we instantiate the tripleshot and then immediately call this method. Which doesn't allow time for Start here
+        // to run.
+        List<Laser> childLasers = this.gameObject.GetComponentsInChildren<Laser>().ToList();
+        
         // TODO: Test what happens in calling code when one of the lasers is destroyed, is it really not
         // sent to caller?
-        List<GameObject> _existentChildLasers = new List<GameObject>();
-        foreach (GameObject laser in _childLasers)
+        List<Laser> _existentChildLasers = new List<Laser>();
+        foreach (Laser laser in childLasers)
         {
             if (laser)
             {

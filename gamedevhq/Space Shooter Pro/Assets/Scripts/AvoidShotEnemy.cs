@@ -17,8 +17,11 @@ public class AvoidShotEnemy : Enemy
     protected override void Start()
     {
         base.Start();
-        transform.position = new Vector3(0, 5, 0);
         _weaponManager = GameObject.Find("Weapon_Manager").GetComponent<WeaponManager>();
+        
+        if (_weaponManager == null) {
+            Debug.LogError("Weapons manager is null when creating player avoid shot enemy.");
+        }
     }
 
     protected override void CalculateMovement()
@@ -36,7 +39,7 @@ public class AvoidShotEnemy : Enemy
         }
         
         // TODO: see how this interacts before/during/after avoiding.
-        // StraightDownMovement();
+        StraightDownMovement();
     }
 
     private Transform ClosestPlayerShotInAvoidRange(List<Transform> playerShots)

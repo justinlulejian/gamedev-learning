@@ -9,7 +9,7 @@ public class SpawnManager : MonoBehaviour
 {
   [SerializeField]
   // TODO: Change this back to Enemy and impl random selection when done with avoid enemy functionality.
-  private GameObject _enemyPrefab;
+  private GameObject[] _enemyTypes;
   [SerializeField]
   private GameObject _bossPrefab;
   [SerializeField]
@@ -69,6 +69,10 @@ public class SpawnManager : MonoBehaviour
     {
       Debug.LogError("Enemy container is null from SpawnManager.");
     }
+    if (_enemyTypes.Length == 0)
+    {
+      Debug.LogError("No enemy types were provide to SpawnManager. Enemies might not spawn.");
+    }
   }
 
   public void StartSpawning()
@@ -94,6 +98,19 @@ public class SpawnManager : MonoBehaviour
     _enemyContainer.AddEnemy(Instantiate(_bossPrefab));
   }
 
+  private GameObject GetRandomEnemyType()
+  {
+    return _enemyTypes[1];
+    if (_enemyTypes.Length == 0)
+    {
+      Debug.LogError("_enemyTypes is empty in spawn manager.");
+      return null;
+    }
+
+    int randomEnemyTypeIndex = Random.Range(0, _enemyTypes.Length);
+    return _enemyTypes[randomEnemyTypeIndex];
+  }
+
   private IEnumerator SpawnEnemyRoutine()
   {
     while (_numberOfEnemyWavesRemaining > 0 && _stopSpawning == false)
@@ -109,7 +126,7 @@ public class SpawnManager : MonoBehaviour
       int numberOfEnemiesToSpawnForWave = CalculateNumberOfEnemiesInWave(_enemyWaveNumber);
       while (numberOfEnemiesToSpawnForWave > 0)
       {
-        _enemyContainer.AddEnemy(Instantiate(_enemyPrefab));
+        _enemyContainer.AddEnemy(Instantiate(GetRandomEnemyType()));
         numberOfEnemiesToSpawnForWave--;
       }
 

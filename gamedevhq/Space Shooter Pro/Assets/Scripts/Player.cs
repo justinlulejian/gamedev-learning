@@ -113,7 +113,7 @@ public class Player : MonoBehaviour
     _slowedDownPlayerSpeed = _speed / _speedMultipler;
    
     // TODO: change this back once done with boss ai.
-    transform.position = new Vector3(0, 0, 0);
+    // transform.position = new Vector3(0, 0, 0);
     
     _uiManager.UpdateAmmoCount(GetCurrentAmmoCount());
 
@@ -235,9 +235,9 @@ public class Player : MonoBehaviour
     if (_isTripleShotActive)
     {
       GameObject tripleShot = InstantiatePrefabAndPlayAudioClip(_tripleShotPrefab, _laserAudioClip);
-      foreach (GameObject laser in tripleShot.GetComponent<TripleShot>().GetChildLasers())
+      foreach (Laser laser in tripleShot.GetComponent<TripleShot>().GetChildLasers())
       {
-        laser.GetComponent<Laser>().LaserDirection = Vector3.up;
+        laser.LaserDirection = Vector3.up;
         // Adding projectiles as children works fine for now since they're 
         _weaponManager.AddPlayerShot(laser.transform);
       }
