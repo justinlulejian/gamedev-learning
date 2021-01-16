@@ -11,6 +11,10 @@ public class AvoidShotEnemy : Enemy
 {
     [SerializeField] 
     private float _avoidDistanceTrigger = 5f;
+
+    // private bool _avoidingPlayerShot;
+    private Vector3 _avoidMovePosition;
+    private bool _avoidAnimRunning;
     
     private WeaponManager _weaponManager;
 
@@ -26,20 +30,25 @@ public class AvoidShotEnemy : Enemy
 
     protected override void CalculateMovement()
     {
+        AvoidPlayerShotsAnim();
+        // AvoidPlayerShots(null);
+        return;
         List<Transform> playerShots = _weaponManager.GetPlayerShots();
         Transform closestPlayerShot = ClosestPlayerShotInAvoidRange(playerShots);
         
         // TODO: confirm this being null returns false.
         if (closestPlayerShot && PlayerShotOnCollisionCourse(closestPlayerShot))
         {
+            Debug.Log("Avoid enemy will try to avoid.");
             // TODO: Add if check if cooldown has passed for moving. Then reset cooldown if it has passed. We can use
             // player fire logic, but it'll only be subtracted from if we're not actively trying to move away from a
             // shot already.
             AvoidPlayerShots(closestPlayerShot);
-        }
-        
-        // TODO: see how this interacts before/during/after avoiding.
-        StraightDownMovement();
+            return;
+        } 
+        Debug.Log("Avoid enemy not trying to avoid.");
+        // TODO: see how this interacts before/during/after avoiding works.
+        // StraightDownMovement();
     }
 
     private Transform ClosestPlayerShotInAvoidRange(List<Transform> playerShots)
@@ -80,29 +89,39 @@ public class AvoidShotEnemy : Enemy
             if (hit.transform == this.transform)
             {
                 Debug.DrawRay(playerShot.position, transform.TransformDirection(Vector3.up) * hit.distance, Color.yellow);
-                Debug.Log("Player shot would have hit enemy.");
+                Debug.Log("Player shot will hit enemy.");
                 return true;
             }
         }
         Debug.DrawRay(playerShot.position, transform.TransformDirection(Vector3.up) * 1000, Color.red);
-        Debug.Log("Player shot would NOT have hit enemy.");
+        Debug.Log("Player shot will NOT hit enemy.");
         return false;
     }
 
     // TODO(Improvement): Multiple shots could be coming at this enemy, an increased difficulty setting could enable
     // this avoid to also try to avoid multiple nearby shots too.
     // Jump the enemy to the left/right but out of the path of player shot. 
-    private void AvoidPlayerShots(Transform playerShots)
+    private void AvoidPlayerShots(Transform playerShot)
     {
+        // _avoidingPlayerShot = true;
+        Vector3 avoidMovePosition = transform.position + new Vector3(10f, 0, 0);
+        transform.position = Vector2.MoveTowards(
+            transform.position, avoidMovePosition, _speed * Time.deltaTime);
+        Debug.Log(
+            $"Avoid enemy trying to move away to pos: {_avoidMovePosition.ToString()} from {transform.position.ToString()}");
+        // if (transform.position == _avoidMovePosition)
+        // {
+        //     _avoidingPlayerShot = false;
+        // }
         // https://docs.unity3d.com/ScriptReference/Physics.Raycast.html
         // First draw a virtual line in the direction the shot(s) are going based on their position and rotation. 
-        
+
         // Calculate a movement spot that is left or right of enemy (decide randomly) where (by either drawing a circle
         // around this enemy or by accessing the polygon collider info) none of those lines will intersect that.
-        
+
         // Initiate movement towards that with a movement type that "jumps" (quick movement at beginning, slower towards
         // end, lerp?). 
-        
+
         // Detect when we've made it to the end movement and indicate that so that we can then start subtracting from
         // the cooldown time.
     }
@@ -111,5 +130,16 @@ public class AvoidShotEnemy : Enemy
     {
         // TODO: Also OnEnemyDestroy anim spawns really big vs size of enemy, can we scale it down?
         // Spin the sprite on the rotation.y access when it avoids a shot. Will do a 360deg rotation quickly. Slerp?
+        Debug.Log("Anim running");
+        Quaternion barrellRoll = Quaternion.Euler(360, 360, 360);
+        this.transform.rotation = Quaternion.Slerp(this.transform.rotation, barrellRoll, 20f * Time.deltaTime);
+        if (!this.transform.rotation.Equals(Quaternion.identity))
+        {
+            _avoidAnimRunning = true;
+        }
+        else
+        {
+            _avoidAnimRunning = false;
+        }
     }
 }

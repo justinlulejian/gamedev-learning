@@ -19,7 +19,7 @@ public class Enemy : MonoBehaviour
   private int _respawnCount = 0;
 
   [SerializeField] 
-  private float _speed = 4f;
+  protected float _speed = 4f;
 
   private enum EnemyMovementType
   {
@@ -79,9 +79,9 @@ public class Enemy : MonoBehaviour
     _shieldsPrefab.SetActive(false);
     // _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
     // _enemyMovementType = ChooseMovementType();
-    _enemyMovementType = EnemyMovementType.StraightDown;
-    _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
-    // _startPosition = new Vector3(0, 5f, 0);
+    // _enemyMovementType = EnemyMovementType.StraightDown;
+    // _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
+    _startPosition = new Vector3(0, 5f, 0);
     // _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
     _spriteRenderer = this.GetComponent<SpriteRenderer>();
     
@@ -229,7 +229,7 @@ public class Enemy : MonoBehaviour
       _enemyMovementType = EnemyMovementType.StraightDown;
     }
 
-    // If the player has been rotated by chasing, return them back to original rotation.
+    // If the enemy has been rotated by chasing, return them back to original rotation.
     if (!this.transform.rotation.Equals(Quaternion.identity))
     {
       MovementExtensions.RotateTowardsQuaternion(this.transform, Quaternion.identity, 10f);
