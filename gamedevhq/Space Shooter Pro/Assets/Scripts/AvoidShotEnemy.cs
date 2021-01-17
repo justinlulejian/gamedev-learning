@@ -42,6 +42,11 @@ public class AvoidShotEnemy : Enemy
         }
     }
 
+    // TODO: Next: figure out the right/best way to have the avoid consistently avoid the lasers and then expand/test to
+    // shotgunshot and missile (missile may just always win, nbd). I'd like it if the adjustment was dynamic so that
+    // it'll just move enough out of the way to miss rather than a static distance, but if too complicated then just do
+    // a static amount that works at least for lasers/shotgunshot. Also make sure cooldown exists because that'll prevent
+    // them from indef avoid shots.
     protected override void CalculateMovement()
     {
         
@@ -174,13 +179,16 @@ public class AvoidShotEnemy : Enemy
             _movementCurrentSlerpTime = 0.0f;
             return;
         }
-        
+        // Can't use Quaternion.Slerp since by it takes the shortest path to the angle. E.g A rotation of 300 degrees
+        // will instead rotate -60 degrees instead of nearly a full rotation. Also I think the fact that the same Euler
+        // angle can be represented in multiple ways has some influence here. So instead we set the angle interpolated
+        // over the time desired (_movementSlerpTime) per frame -- essentially doing it in little steps instead as a
+        // workaround.
+        // Adapted from
+        // https://forum.unity.com/threads/by-pass-the-shortest-route-aspect-of-quaternion-slerp.459429/#post-2982421
         transform.rotation = _origRotation * Quaternion.AngleAxis(
-            360 * _movementCurrentSlerpTime / _movementSlerpTime, Vector3.up);
+            360 * _movementCurrentSlerpTime / _movementSlerpTime, Vector3.up);  // Vector3.up in 2D is y.
         _movementCurrentSlerpTime += Time.deltaTime;
-        
-        // transform.rotation = _origRotation * Quaternion.AngleAxis(360, Vector3.up);
-       
     }
     
     // private IEnumerator AnimateAroundAxis(Transform trans, Vector3 axis, float changeInAngle, float duration)
