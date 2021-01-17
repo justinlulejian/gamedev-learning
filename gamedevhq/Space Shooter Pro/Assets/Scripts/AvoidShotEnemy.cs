@@ -15,12 +15,26 @@ public class AvoidShotEnemy : Enemy
     // private bool _avoidingPlayerShot;
     private Vector3 _avoidMovePosition;
     private bool _avoidAnimRunning;
+    private float _movementCurrentSlerpTime;
+    private float _movementSlerpTime;
+    private Quaternion _origRotation;
+    private Quaternion _destRotation;
     
     private WeaponManager _weaponManager;
 
     protected override void Start()
     {
         base.Start();
+        _avoidMovePosition = transform.position + new Vector3(3, 0, 0);
+        _movementSlerpTime = _movementLerpTime = 1.0f;
+        _origRotation = this.transform.rotation;
+        Debug.Log($"tranform.rotation orig: {transform.rotation.eulerAngles.ToString()}");
+        _destRotation =  Quaternion.Euler(0, 360, 0) * transform.rotation;
+        Debug.Log($"_destRotation: {_destRotation.eulerAngles.ToString()}");
+        Debug.Log($"Q.Euler(0,360,0): {Quaternion.Euler(0,360,0).eulerAngles.ToString()}");
+        // StartCoroutine(AnimateAroundAxis(this.transform, Vector3.up, 360, _movementSlerpTime));
+
+        
         _weaponManager = GameObject.Find("Weapon_Manager").GetComponent<WeaponManager>();
         
         if (_weaponManager == null) {
@@ -30,9 +44,7 @@ public class AvoidShotEnemy : Enemy
 
     protected override void CalculateMovement()
     {
-        AvoidPlayerShotsAnim();
-        // AvoidPlayerShots(null);
-        return;
+        
         List<Transform> playerShots = _weaponManager.GetPlayerShots();
         Transform closestPlayerShot = ClosestPlayerShotInAvoidRange(playerShots);
         
@@ -103,10 +115,34 @@ public class AvoidShotEnemy : Enemy
     // Jump the enemy to the left/right but out of the path of player shot. 
     private void AvoidPlayerShots(Transform playerShot)
     {
+
+        // https://easings.net/#easeOutCirc
+        float easeOutCircT(float t)
+        {
+            return Mathf.Sqrt(1.0f - Mathf.Pow(t - 1.0f, 2.0f));
+        }
+        
+        _movementCurrentLerpTime += Time.deltaTime;
+        if (_movementCurrentLerpTime > _movementLerpTime)
+        {
+            _movementCurrentLerpTime = 0.0f;
+            _startPosition = transform.position;
+            _avoidMovePosition = transform.position + new Vector3(3, 0, 0);
+            return;
+        }
+
+        float interpValue = _movementCurrentLerpTime / _movementLerpTime;
+        interpValue = easeOutCircT(interpValue);
+        Debug.Log($"Interp value: {interpValue.ToString()}");
+        transform.position = Vector3.Lerp(_startPosition, _avoidMovePosition, interpValue);
+        
+        AvoidPlayerShotsAnim();
+
         // _avoidingPlayerShot = true;
-        Vector3 avoidMovePosition = transform.position + new Vector3(10f, 0, 0);
-        transform.position = Vector2.MoveTowards(
-            transform.position, avoidMovePosition, _speed * Time.deltaTime);
+        // Vector3 avoidMovePosition = transform.position + new Vector3(10f, 0, 0);
+        // transform.position = Vector2.MoveTowards(
+        //     transform.position, avoidMovePosition, _speed * Time.deltaTime);
+        
         Debug.Log(
             $"Avoid enemy trying to move away to pos: {_avoidMovePosition.ToString()} from {transform.position.ToString()}");
         // if (transform.position == _avoidMovePosition)
@@ -129,17 +165,35 @@ public class AvoidShotEnemy : Enemy
     private void AvoidPlayerShotsAnim()
     {
         // TODO: Also OnEnemyDestroy anim spawns really big vs size of enemy, can we scale it down?
-        // Spin the sprite on the rotation.y access when it avoids a shot. Will do a 360deg rotation quickly. Slerp?
-        Debug.Log("Anim running");
-        Quaternion barrellRoll = Quaternion.Euler(360, 360, 360);
-        this.transform.rotation = Quaternion.Slerp(this.transform.rotation, barrellRoll, 20f * Time.deltaTime);
-        if (!this.transform.rotation.Equals(Quaternion.identity))
+        
+        if (_movementCurrentSlerpTime > _movementSlerpTime)
         {
-            _avoidAnimRunning = true;
+            Debug.Log("Believe we've finished rotating.");
+            // Just to be safe, set the rotation back to the original to make sure we start fresh for next time.
+            transform.rotation = _origRotation;
+            _movementCurrentSlerpTime = 0.0f;
+            return;
         }
-        else
-        {
-            _avoidAnimRunning = false;
-        }
+        
+        transform.rotation = _origRotation * Quaternion.AngleAxis(
+            360 * _movementCurrentSlerpTime / _movementSlerpTime, Vector3.up);
+        _movementCurrentSlerpTime += Time.deltaTime;
+        
+        // transform.rotation = _origRotation * Quaternion.AngleAxis(360, Vector3.up);
+       
     }
+    
+    // private IEnumerator AnimateAroundAxis(Transform trans, Vector3 axis, float changeInAngle, float duration)
+    // {
+    //     var start = trans.rotation;
+    //     float t = 0f;
+    //     while(t < duration)
+    //     {
+    //         trans.rotation = start * Quaternion.AngleAxis(changeInAngle * t / duration, axis);
+    //         yield return null;
+    //         t += Time.deltaTime;
+    //     }
+    //     trans.rotation = start * Quaternion.AngleAxis(changeInAngle, axis);
+    // }
+
 }
