@@ -13,28 +13,27 @@ public class AvoidShotEnemy : Enemy
     private float _avoidDistanceTrigger = 5f;
 
     // private bool _avoidingPlayerShot;
-    private Vector3 _avoidMovePosition;
+    private Vector3 _avoidMovePosition ;
+    private Vector3 _avoidMoveDistance = new Vector3(3, 0, 0);
     private bool _avoidAnimRunning;
     private float _movementCurrentSlerpTime;
-    private float _movementSlerpTime;
+    private float _animSlerpTime;
     private Quaternion _origRotation;
-    private Quaternion _destRotation;
+
+    [SerializeField] 
+    private float _avoidCooldownWaitTime = 3f;
+    private bool _avoidActionsAndCooldownComplete = true;
+    private bool _tryAvoidPlayerShot;
+    private bool _avoidMovementComplete = true;
+    private bool _avoidAnimComplete = true;
     
     private WeaponManager _weaponManager;
 
     protected override void Start()
     {
         base.Start();
-        _avoidMovePosition = transform.position + new Vector3(3, 0, 0);
-        _movementSlerpTime = _movementLerpTime = 1.0f;
+        _animSlerpTime = _movementLerpTime = 1.0f;  // Avoid movement and anim should complete at the same time.
         _origRotation = this.transform.rotation;
-        Debug.Log($"tranform.rotation orig: {transform.rotation.eulerAngles.ToString()}");
-        _destRotation =  Quaternion.Euler(0, 360, 0) * transform.rotation;
-        Debug.Log($"_destRotation: {_destRotation.eulerAngles.ToString()}");
-        Debug.Log($"Q.Euler(0,360,0): {Quaternion.Euler(0,360,0).eulerAngles.ToString()}");
-        // StartCoroutine(AnimateAroundAxis(this.transform, Vector3.up, 360, _movementSlerpTime));
-
-        
         _weaponManager = GameObject.Find("Weapon_Manager").GetComponent<WeaponManager>();
         
         if (_weaponManager == null) {
@@ -42,28 +41,41 @@ public class AvoidShotEnemy : Enemy
         }
     }
 
+    // TODO- update: doesn't avoid shotgun shot with same problem as TripleShot, it's Start() doesn't get called before
+    // we call the method to get them so it doesn't find them...might have to refactor them to be child objects
+    // so that I can query for them when that method is called? :/
+
     // TODO: Next: figure out the right/best way to have the avoid consistently avoid the lasers and then expand/test to
     // shotgunshot and missile (missile may just always win, nbd). I'd like it if the adjustment was dynamic so that
     // it'll just move enough out of the way to miss rather than a static distance, but if too complicated then just do
     // a static amount that works at least for lasers/shotgunshot. Also make sure cooldown exists because that'll prevent
-    // them from indef avoid shots.
+    // them from indef avoid shots. Also OnEnemyDestroy anim spawns really big vs size of enemy, can we scale it down?
     protected override void CalculateMovement()
     {
-        
         List<Transform> playerShots = _weaponManager.GetPlayerShots();
-        Transform closestPlayerShot = ClosestPlayerShotInAvoidRange(playerShots);
-        
-        // TODO: confirm this being null returns false.
-        if (closestPlayerShot && PlayerShotOnCollisionCourse(closestPlayerShot))
+        Transform playerShotInAvoidRange = ClosestPlayerShotInAvoidRange(playerShots);
+
+        // TODO: confirm playerShotInAvoidRange being null returns false.
+        // TODO(Improvement): I feel like the string of &&s here is me missing something that would make this more
+        // elegant.
+        if (playerShotInAvoidRange && PlayerShotOnCollisionCourse(playerShotInAvoidRange) &&
+            _avoidActionsAndCooldownComplete)
         {
+            _tryAvoidPlayerShot = true;
+            _avoidActionsAndCooldownComplete = false;
             Debug.Log("Avoid enemy will try to avoid.");
             // TODO: Add if check if cooldown has passed for moving. Then reset cooldown if it has passed. We can use
             // player fire logic, but it'll only be subtracted from if we're not actively trying to move away from a
             // shot already.
-            AvoidPlayerShots(closestPlayerShot);
-            return;
-        } 
-        Debug.Log("Avoid enemy not trying to avoid.");
+        }
+
+        // This loop is separate from above to ensure we don't tie the movement and anim to whether a shot is in range.
+        if (_tryAvoidPlayerShot && !_avoidActionsAndCooldownComplete)
+        {
+            _tryAvoidPlayerShot = false;  // Prevent us from running this loop again until the coroutine finishes.
+            StartCoroutine(AvoidPlayerShotMovementAnimAndCooldownRoutine());
+        }
+        
         // TODO: see how this interacts before/during/after avoiding works.
         // StraightDownMovement();
     }
@@ -115,93 +127,90 @@ public class AvoidShotEnemy : Enemy
         return false;
     }
 
+    private IEnumerator AvoidPlayerShotMovementAnimAndCooldownRoutine()
+    {
+        StartCoroutine(AvoidPlayerShotRoutine());
+        StartCoroutine(AvoidPlayerShotAnimRoutine());
+        // TODO(Improvement): I feel like this is an abuse of coroutines for what I'm doing...
+        yield return new WaitUntil(() => _avoidMovementComplete && _avoidAnimComplete);
+        yield return new WaitForSeconds(_avoidCooldownWaitTime);
+        _avoidActionsAndCooldownComplete = true;
+        yield return null;
+    }
+    
+    // Customize lerp to move quickly at first, then slow down towards end -- like a "dash".
+    // https://easings.net/#easeOutCirc
+    private float easeOutCircT(float t)
+    {
+        return Mathf.Sqrt(1.0f - Mathf.Pow(t - 1.0f, 2.0f));
+    }
+
+    private IEnumerator AvoidPlayerShotRoutine()
+    {
+        float movementCurrentLerpTime = 0f;
+        Vector3 startPosition = transform.position;
+        Vector3 avoidMovePosition = startPosition + _avoidMoveDistance;
+        Debug.Log(
+            $"Avoid enemy trying to move away to pos: " +
+            $"{avoidMovePosition.ToString()} from {startPosition.ToString()}");
+        while (movementCurrentLerpTime < _movementLerpTime)
+        {
+            AvoidPlayerShot(startPosition, avoidMovePosition, ref movementCurrentLerpTime);
+            yield return null;  // Wait a frame before continuing. 
+        }
+
+        _avoidMovementComplete = true;
+        yield return null;
+    }
+
     // TODO(Improvement): Multiple shots could be coming at this enemy, an increased difficulty setting could enable
     // this avoid to also try to avoid multiple nearby shots too.
     // Jump the enemy to the left/right but out of the path of player shot. 
-    private void AvoidPlayerShots(Transform playerShot)
+    private void AvoidPlayerShot(Vector3 startPosition, Vector3 avoidMovePosition, ref float movementCurrentLerpTime)
     {
-
-        // https://easings.net/#easeOutCirc
-        float easeOutCircT(float t)
+        movementCurrentLerpTime += Time.deltaTime;
+        // Movement completed.
+        if (movementCurrentLerpTime > _movementLerpTime)
         {
-            return Mathf.Sqrt(1.0f - Mathf.Pow(t - 1.0f, 2.0f));
-        }
-        
-        _movementCurrentLerpTime += Time.deltaTime;
-        if (_movementCurrentLerpTime > _movementLerpTime)
-        {
-            _movementCurrentLerpTime = 0.0f;
-            _startPosition = transform.position;
-            _avoidMovePosition = transform.position + new Vector3(3, 0, 0);
             return;
         }
 
-        float interpValue = _movementCurrentLerpTime / _movementLerpTime;
+        float interpValue = movementCurrentLerpTime / _movementLerpTime;
         interpValue = easeOutCircT(interpValue);
-        Debug.Log($"Interp value: {interpValue.ToString()}");
-        transform.position = Vector3.Lerp(_startPosition, _avoidMovePosition, interpValue);
-        
-        AvoidPlayerShotsAnim();
-
-        // _avoidingPlayerShot = true;
-        // Vector3 avoidMovePosition = transform.position + new Vector3(10f, 0, 0);
-        // transform.position = Vector2.MoveTowards(
-        //     transform.position, avoidMovePosition, _speed * Time.deltaTime);
-        
-        Debug.Log(
-            $"Avoid enemy trying to move away to pos: {_avoidMovePosition.ToString()} from {transform.position.ToString()}");
-        // if (transform.position == _avoidMovePosition)
-        // {
-        //     _avoidingPlayerShot = false;
-        // }
-        // https://docs.unity3d.com/ScriptReference/Physics.Raycast.html
-        // First draw a virtual line in the direction the shot(s) are going based on their position and rotation. 
-
-        // Calculate a movement spot that is left or right of enemy (decide randomly) where (by either drawing a circle
-        // around this enemy or by accessing the polygon collider info) none of those lines will intersect that.
-
-        // Initiate movement towards that with a movement type that "jumps" (quick movement at beginning, slower towards
-        // end, lerp?). 
-
-        // Detect when we've made it to the end movement and indicate that so that we can then start subtracting from
-        // the cooldown time.
+        // Debug.Log($"Interp value: {interpValue.ToString()}");
+        transform.position = Vector3.Lerp(startPosition, avoidMovePosition, interpValue);
+    }
+    
+    private IEnumerator AvoidPlayerShotAnimRoutine()
+    {
+        float animCurrentSlerpTime = 0f;
+        while (animCurrentSlerpTime < _animSlerpTime)
+        { 
+            AvoidPlayerShotsAnim(ref animCurrentSlerpTime);
+            yield return null;  // Wait a frame before continuing. 
+        }
+        _avoidAnimComplete = true;
+        yield return null;
     }
 
-    private void AvoidPlayerShotsAnim()
+    private void AvoidPlayerShotsAnim(ref float animCurrentSlerpTime)
     {
-        // TODO: Also OnEnemyDestroy anim spawns really big vs size of enemy, can we scale it down?
+        animCurrentSlerpTime += Time.deltaTime;
         
-        if (_movementCurrentSlerpTime > _movementSlerpTime)
+        // Anim completed.
+        if (animCurrentSlerpTime > _animSlerpTime)
         {
-            Debug.Log("Believe we've finished rotating.");
             // Just to be safe, set the rotation back to the original to make sure we start fresh for next time.
             transform.rotation = _origRotation;
-            _movementCurrentSlerpTime = 0.0f;
             return;
         }
         // Can't use Quaternion.Slerp since by it takes the shortest path to the angle. E.g A rotation of 300 degrees
-        // will instead rotate -60 degrees instead of nearly a full rotation. Also I think the fact that the same Euler
-        // angle can be represented in multiple ways has some influence here. So instead we set the angle interpolated
-        // over the time desired (_movementSlerpTime) per frame -- essentially doing it in little steps instead as a
-        // workaround.
+        // will instead rotate -60 degrees instead of 300 degrees. Also I think the fact that the same Euler angle can
+        // be represented in multiple ways has some influence here. So instead we set the angle interpolated over the
+        // time desired (_animSlerpTime) per frame -- essentially doing it in little steps instead as a workaround.
         // Adapted from
         // https://forum.unity.com/threads/by-pass-the-shortest-route-aspect-of-quaternion-slerp.459429/#post-2982421
         transform.rotation = _origRotation * Quaternion.AngleAxis(
-            360 * _movementCurrentSlerpTime / _movementSlerpTime, Vector3.up);  // Vector3.up in 2D is y.
-        _movementCurrentSlerpTime += Time.deltaTime;
+            360 * animCurrentSlerpTime / _animSlerpTime, Vector3.up);  // Vector3.up in 2D is y.
     }
-    
-    // private IEnumerator AnimateAroundAxis(Transform trans, Vector3 axis, float changeInAngle, float duration)
-    // {
-    //     var start = trans.rotation;
-    //     float t = 0f;
-    //     while(t < duration)
-    //     {
-    //         trans.rotation = start * Quaternion.AngleAxis(changeInAngle * t / duration, axis);
-    //         yield return null;
-    //         t += Time.deltaTime;
-    //     }
-    //     trans.rotation = start * Quaternion.AngleAxis(changeInAngle, axis);
-    // }
-
 }

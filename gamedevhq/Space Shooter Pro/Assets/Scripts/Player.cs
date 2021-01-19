@@ -238,7 +238,6 @@ public class Player : MonoBehaviour
       foreach (Laser laser in tripleShot.GetComponent<TripleShot>().GetChildLasers())
       {
         laser.LaserDirection = Vector3.up;
-        // Adding projectiles as children works fine for now since they're 
         _weaponManager.AddPlayerShot(laser.transform);
       }
       return;
