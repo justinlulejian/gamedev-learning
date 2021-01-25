@@ -147,6 +147,7 @@ MonoBehaviour:
   _speed: 3
   _pickupAudioClip: {fileID: 8300000, guid: 5ee343246919d2b4bba63ae629e95494, type: 3}
   _powerupID: 2
+  _playerCollectingSpeedMultiplier: 2
 --- !u!95 &648936038
 Animator:
   serializedVersion: 3

@@ -131,7 +131,7 @@ public class AvoidShotEnemy : Enemy
     
     // Customize lerp to move quickly at first, then slow down towards end -- like a "dash".
     // https://easings.net/#easeOutCirc
-    private float easeOutCircT(float t)
+    private float EaseOutCircT(float t)
     {
         return Mathf.Sqrt(1.0f - Mathf.Pow(t - 1.0f, 2.0f));
     }
@@ -164,7 +164,7 @@ public class AvoidShotEnemy : Enemy
         }
 
         float interpValue = movementCurrentLerpTime / _movementLerpTime;
-        interpValue = easeOutCircT(interpValue);
+        interpValue = EaseOutCircT(interpValue);
         transform.position = Vector3.Lerp(startPosition, avoidMovePosition, interpValue);
     }
     
@@ -211,7 +211,8 @@ public class AvoidShotEnemy : Enemy
         Destroy(GetComponent<PolygonCollider2D>());
         // TODO(Improvement): This causes a bit of a delay in when the enemy sprite disappears and when the explosion
         // starts. Destroying the SpriteRenderer with a delay instead of SetActive(false) causes player to get damaged
-        // if they go into explosion after shooting them so that doesn't work as-is.
+        // if they go into explosion after shooting them so that doesn't work as-is. Maybe it's because I need to
+        // destroy CircleCollider rather than PolygonCollider2D?
         this.gameObject.SetActive(false);
         base.WasDefeated();
         base.RemoveEnemyFromGame(2.8f);

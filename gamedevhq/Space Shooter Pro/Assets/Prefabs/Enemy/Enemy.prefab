@@ -52,6 +52,8 @@ MonoBehaviour:
   _laserPrefab: {fileID: 3897491777811208797, guid: 569ea2487b6446d468ad8ec2a6b7c697,
     type: 3}
   _speed: 4
+  _aggroTowardsPlayer: 0
+  _aggroRammingDistanceToPlayer: 5
   _audioSource: {fileID: -1188828643870865619}
   _shieldsPrefab: {fileID: 700511071772947257}
 --- !u!212 &6577423984917178473
@@ -277,6 +279,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Shields
+      objectReference: {fileID: 0}
+    - target: {fileID: 700511071687347765, guid: 838062af32bd8344890381ddeccbffc9,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 700511071687347766, guid: 838062af32bd8344890381ddeccbffc9,
         type: 3}
