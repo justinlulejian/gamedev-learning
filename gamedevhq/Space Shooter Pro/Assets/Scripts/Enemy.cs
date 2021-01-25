@@ -19,14 +19,14 @@ public class Enemy : MonoBehaviour
   private int _respawnCount = 0;
 
   [SerializeField] 
-  private float _speed = 4f;
+  protected float _speed = 4f;
 
-  private enum EnemyMovementType
+  protected enum EnemyMovementType
   {
     StraightDown,
     SweepIn,
   }
-  private EnemyMovementType _enemyMovementType;
+  protected EnemyMovementType _enemyMovementType;
   private protected Vector3 _startPosition;
   // Not all movement types use the end position at the moment, though they could. Currently only SweepIn does.
   private protected Vector3 _endPosition;
@@ -34,7 +34,7 @@ public class Enemy : MonoBehaviour
   private protected float _movementCurrentLerpTime;
 
   [SerializeField] 
-  private bool _aggroTowardsPlayer;
+  protected bool _aggroTowardsPlayer;
   [SerializeField] 
   private float _aggroRammingDistanceToPlayer = 5f;  // How close player must be for aggro enemy to attempt ramming.
   private Vector3 _aggroRamVelocity = Vector3.zero;
@@ -76,11 +76,10 @@ public class Enemy : MonoBehaviour
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
-    _shieldsPrefab.SetActive(false);
     _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
     _enemyMovementType = ChooseMovementType();
     _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
-    _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
+    // _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
     _spriteRenderer = this.GetComponent<SpriteRenderer>();
     
     if (_enemyMovementType == EnemyMovementType.SweepIn)
@@ -130,9 +129,9 @@ public class Enemy : MonoBehaviour
     return new Vector3(startPosition.x * -1f, Random.Range(startPosition.y - 2f, -6.5f), startPosition.z);
   }
 
-  void Update()
+  protected virtual void Update()
   {
-    // When destorying enemies _speed is set to 0 which causes movement to be weird for some movement types. 
+    // When destroying enemies _speed is set to 0 which causes movement to be weird for some movement types. 
     if (IsDefeated())
     {
       return;
@@ -141,7 +140,7 @@ public class Enemy : MonoBehaviour
     PeriodicFireLasers();
   }
 
-  private EnemyMovementType ChooseMovementType()
+  protected virtual EnemyMovementType ChooseMovementType()
   {
     Array movementValues = Enum.GetValues(typeof(EnemyMovementType));
     System.Random random = new System.Random();
@@ -206,7 +205,7 @@ public class Enemy : MonoBehaviour
         transform.position, _player.transform.position, ref _aggroRamVelocity, .75f);
   }
 
-  private void CalculateMovement()
+  protected virtual void CalculateMovement()
   {
     if (_aggroTowardsPlayer && WithinRammingDistanceToPlayer())
     {
@@ -227,7 +226,7 @@ public class Enemy : MonoBehaviour
       _enemyMovementType = EnemyMovementType.StraightDown;
     }
 
-    // If the player has been rotated by chasing, return them back to original rotation.
+    // If the enemy has been rotated by chasing, return them back to original rotation.
     if (!this.transform.rotation.Equals(Quaternion.identity))
     {
       MovementExtensions.RotateTowardsQuaternion(this.transform, Quaternion.identity, 10f);
@@ -244,12 +243,13 @@ public class Enemy : MonoBehaviour
     }
   }
 
-  private void StraightDownMovement()
+  protected virtual void StraightDownMovement()
   {
     Vector3 moveShip = Vector3.down * (_speed * Time.deltaTime);
     transform.Translate(moveShip);
 
-    if (transform.position.y <= -5f)
+    // If the enemy goes out of bounds downward to left and right (for AvoidEnemy).
+    if (transform.position.y <= -5f || transform.position.x >= 11f || transform.position.x <= -11f)
     {
       // Respawn back at the top of the screen.
       float randomX = Random.Range(-8f, 8f);
@@ -323,7 +323,7 @@ public class Enemy : MonoBehaviour
       {
         FireLasers(Vector3.down);
       }
-      // TODO: If player destroyed by enemy/boss this can null reference.
+      // TODO(bug): If player destroyed by enemy/boss this can null reference.
       // Fire on player behind them.
       if (ObjectsInDirectionOfEnemy(new List<GameObject> {_player.gameObject}, Vector3.up))
       {

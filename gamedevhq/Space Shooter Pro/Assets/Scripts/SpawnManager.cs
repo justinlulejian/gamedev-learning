@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 public class SpawnManager : MonoBehaviour
 {
   [SerializeField]
-  private GameObject _enemyPrefab;
+  private GameObject[] _enemyTypes;
   [SerializeField]
   private GameObject _bossPrefab;
   [SerializeField]
@@ -68,6 +68,10 @@ public class SpawnManager : MonoBehaviour
     {
       Debug.LogError("Enemy container is null from SpawnManager.");
     }
+    if (_enemyTypes.Length == 0)
+    {
+      Debug.LogError("No enemy types were provide to SpawnManager. Enemies might not spawn.");
+    }
   }
 
   public void StartSpawning()
@@ -93,6 +97,18 @@ public class SpawnManager : MonoBehaviour
     _enemyContainer.AddEnemy(Instantiate(_bossPrefab));
   }
 
+  private GameObject GetRandomEnemyType()
+  {
+    if (_enemyTypes.Length == 0)
+    {
+      Debug.LogError("_enemyTypes is empty in spawn manager.");
+      return null;
+    }
+
+    int randomEnemyTypeIndex = Random.Range(0, _enemyTypes.Length);
+    return _enemyTypes[randomEnemyTypeIndex];
+  }
+
   private IEnumerator SpawnEnemyRoutine()
   {
     while (_numberOfEnemyWavesRemaining > 0 && _stopSpawning == false)
@@ -108,7 +124,7 @@ public class SpawnManager : MonoBehaviour
       int numberOfEnemiesToSpawnForWave = CalculateNumberOfEnemiesInWave(_enemyWaveNumber);
       while (numberOfEnemiesToSpawnForWave > 0)
       {
-        _enemyContainer.AddEnemy(Instantiate(_enemyPrefab));
+        _enemyContainer.AddEnemy(Instantiate(GetRandomEnemyType()));
         numberOfEnemiesToSpawnForWave--;
       }
 
@@ -169,7 +185,15 @@ public class SpawnManager : MonoBehaviour
 
   public List<Powerup> GetAllOnScreenPowerUps()
   {
-    return _powerupObjContainer;
+    List<Powerup> existentPowerups = new List<Powerup>();
+    foreach (Powerup powerUp in _powerupObjContainer)
+    {
+      if (powerUp != null)
+      {
+        existentPowerups.Add(powerUp);
+      }
+    }
+    return existentPowerups;
   }
   
   public List<Enemy> GetAllOnScreenEnemies()
