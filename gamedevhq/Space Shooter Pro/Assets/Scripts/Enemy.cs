@@ -21,12 +21,12 @@ public class Enemy : MonoBehaviour
   [SerializeField] 
   protected float _speed = 4f;
 
-  private enum EnemyMovementType
+  protected enum EnemyMovementType
   {
     StraightDown,
     SweepIn,
   }
-  private EnemyMovementType _enemyMovementType;
+  protected EnemyMovementType _enemyMovementType;
   private protected Vector3 _startPosition;
   // Not all movement types use the end position at the moment, though they could. Currently only SweepIn does.
   private protected Vector3 _endPosition;
@@ -34,7 +34,7 @@ public class Enemy : MonoBehaviour
   private protected float _movementCurrentLerpTime;
 
   [SerializeField] 
-  private bool _aggroTowardsPlayer;
+  protected bool _aggroTowardsPlayer;
   [SerializeField] 
   private float _aggroRammingDistanceToPlayer = 5f;  // How close player must be for aggro enemy to attempt ramming.
   private Vector3 _aggroRamVelocity = Vector3.zero;
@@ -76,12 +76,9 @@ public class Enemy : MonoBehaviour
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
-    _shieldsPrefab.SetActive(false);
-    // _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
-    // _enemyMovementType = ChooseMovementType();
-    // _enemyMovementType = EnemyMovementType.StraightDown;
-    // _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
-    _startPosition = new Vector3(0, 5f, 0);
+    _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
+    _enemyMovementType = ChooseMovementType();
+    _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
     // _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
     _spriteRenderer = this.GetComponent<SpriteRenderer>();
     
@@ -140,10 +137,10 @@ public class Enemy : MonoBehaviour
       return;
     }
     CalculateMovement();
-    // PeriodicFireLasers();
+    PeriodicFireLasers();
   }
 
-  private EnemyMovementType ChooseMovementType()
+  protected virtual EnemyMovementType ChooseMovementType()
   {
     Array movementValues = Enum.GetValues(typeof(EnemyMovementType));
     System.Random random = new System.Random();
@@ -251,7 +248,8 @@ public class Enemy : MonoBehaviour
     Vector3 moveShip = Vector3.down * (_speed * Time.deltaTime);
     transform.Translate(moveShip);
 
-    if (transform.position.y <= -5f)
+    // If the enemy goes out of bounds downward to left and right (for AvoidEnemy).
+    if (transform.position.y <= -5f || transform.position.x >= 11f || transform.position.x <= -11f)
     {
       // Respawn back at the top of the screen.
       float randomX = Random.Range(-8f, 8f);
@@ -325,7 +323,7 @@ public class Enemy : MonoBehaviour
       {
         FireLasers(Vector3.down);
       }
-      // TODO: If player destroyed by enemy/boss this can null reference.
+      // TODO(bug): If player destroyed by enemy/boss this can null reference.
       // Fire on player behind them.
       if (ObjectsInDirectionOfEnemy(new List<GameObject> {_player.gameObject}, Vector3.up))
       {
@@ -489,7 +487,7 @@ public class Enemy : MonoBehaviour
 
   protected virtual void DestroyEnemy()
   {
-    // _animator.SetTrigger("OnEnemyDeath");
+    _animator.SetTrigger("OnEnemyDeath");
     WasDefeated();
     _speed = 0f;
     // TODO(Improvement): try to make this work in the future, at the moment it never gets to setting animFinished
@@ -500,8 +498,7 @@ public class Enemy : MonoBehaviour
       _audioSource.Play();
     }
     Destroy(GetComponent<Collider2D>());
-    RemoveEnemyFromGame(0f);
-    // RemoveEnemyFromGame(2.8f);
+    RemoveEnemyFromGame(2.8f);
   }
   
   // TODO(Improvement): This is a possible alternative way to play the death anim and destroy the

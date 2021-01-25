@@ -8,7 +8,6 @@ using Random = UnityEngine.Random;
 public class SpawnManager : MonoBehaviour
 {
   [SerializeField]
-  // TODO: Change this back to Enemy and impl random selection when done with avoid enemy functionality.
   private GameObject[] _enemyTypes;
   [SerializeField]
   private GameObject _bossPrefab;
@@ -100,7 +99,6 @@ public class SpawnManager : MonoBehaviour
 
   private GameObject GetRandomEnemyType()
   {
-    return _enemyTypes[1];
     if (_enemyTypes.Length == 0)
     {
       Debug.LogError("_enemyTypes is empty in spawn manager.");
@@ -187,7 +185,15 @@ public class SpawnManager : MonoBehaviour
 
   public List<Powerup> GetAllOnScreenPowerUps()
   {
-    return _powerupObjContainer;
+    List<Powerup> existentPowerups = new List<Powerup>();
+    foreach (Powerup powerUp in _powerupObjContainer)
+    {
+      if (powerUp != null)
+      {
+        existentPowerups.Add(powerUp);
+      }
+    }
+    return existentPowerups;
   }
   
   public List<Enemy> GetAllOnScreenEnemies()

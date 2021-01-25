@@ -14,8 +14,6 @@ public class TripleShot : PlayerProjectile
         // to run.
         List<Laser> childLasers = this.gameObject.GetComponentsInChildren<Laser>().ToList();
         
-        // TODO: Test what happens in calling code when one of the lasers is destroyed, is it really not
-        // sent to caller?
         List<Laser> _existentChildLasers = new List<Laser>();
         foreach (Laser laser in childLasers)
         {

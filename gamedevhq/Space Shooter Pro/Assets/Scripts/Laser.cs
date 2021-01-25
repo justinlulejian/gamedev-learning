@@ -33,7 +33,6 @@ public class Laser : PlayerProjectile
       // they're in at this point.
       if (transform.parent != null)
       {
-        // Debug.Log("Not destroying triple shot parent of laser");
         Destroy(transform.parent.gameObject);
       }
       Destroy(this.gameObject);

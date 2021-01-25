@@ -112,9 +112,6 @@ public class Player : MonoBehaviour
     _spedUpPlayerSpeed = _speed * _speedMultipler;
     _slowedDownPlayerSpeed = _speed / _speedMultipler;
    
-    // TODO: change this back once done with boss ai.
-    // transform.position = new Vector3(0, 0, 0);
-    
     _uiManager.UpdateAmmoCount(GetCurrentAmmoCount());
 
     _thrusterTimeSecondsRemaining = _thrusterTimeSeconds;
@@ -252,9 +249,9 @@ public class Player : MonoBehaviour
     {
       GameObject _shotgunShot = InstantiatePrefabAndPlayAudioClip(
         _shotgunPrefab, _shotgunAudioClip, positionOffset:new Vector3(0, 1f, 0));
-      foreach (GameObject shotgunShot in _shotgunShot.GetComponent<ShotgunShot>().GetShotgunShots())
+      foreach (Transform shotgunShot in _shotgunShot.GetComponent<ShotgunShot>().GetShotgunShots())
       {
-        _weaponManager.AddPlayerShot(_shotgunShot.transform);
+        _weaponManager.AddPlayerShot(shotgunShot);
       }
       return;
     }

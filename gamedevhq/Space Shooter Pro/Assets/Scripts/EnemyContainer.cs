@@ -35,8 +35,7 @@ public class EnemyContainer : MonoBehaviour
     public void RemoveEnemy(Enemy enemy, float afterTime)
     {
         _enemies.Remove(enemy);
-        // Destroy(enemy.gameObject, afterTime);
-        Destroy(enemy.gameObject);
+        Destroy(enemy.gameObject, afterTime);
     }
     
     public void RemoveAllEnemies()

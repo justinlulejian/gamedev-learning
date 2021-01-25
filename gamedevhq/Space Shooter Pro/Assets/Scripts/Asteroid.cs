@@ -45,7 +45,7 @@ public class Asteroid : MonoBehaviour
     {
         if (_spawnManager == null)
         {
-            Debug.Log("Spawnmanager was null in Asteroid onDestroy not calling start" +
+            Debug.LogError("Spawnmanager was null in Asteroid onDestroy not calling start" +
                            " spawning. May be due to unexpected scene end.");
             return;
         }

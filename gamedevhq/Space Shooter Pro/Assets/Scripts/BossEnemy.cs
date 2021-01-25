@@ -72,7 +72,7 @@ public class BossEnemy : Enemy
 
     private void OscillateMovement()
     {
-        // TODO(Improvement): Make the boss move in small circles to simulate flight.
+        // TODO(Improvement): Make the boss move in small circles to simulate hovering flight.
     }
     
     private void OnTriggerEnter2D(Collider2D other)
@@ -84,7 +84,8 @@ public class BossEnemy : Enemy
             // ClosestPoint and show damage there. This could be improved by changing trigger colliders to
             // non-trigger physics colliders.
             Instantiate(
-                _damagePrefab, _collider.ClosestPoint(other.transform.position), Quaternion.identity);
+                _damagePrefab, _collider.ClosestPoint(other.transform.position),
+                Quaternion.identity);
         }
         
         base.OnTriggerEntered2D(other);
@@ -118,7 +119,7 @@ public class BossEnemy : Enemy
         Destroy(GetComponent<PolygonCollider2D>());
         base.WasDefeated();
         this.gameObject.SetActive(false);
-        foreach (var weapon in _specialWeaponsActive)
+        foreach (GameObject weapon in _specialWeaponsActive)
         {
             if (weapon != null)
             {

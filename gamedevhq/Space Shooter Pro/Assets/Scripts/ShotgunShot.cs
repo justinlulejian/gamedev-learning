@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using DefaultNamespace;
 using UnityEngine;
 
@@ -19,7 +17,20 @@ public class ShotgunShot : PlayerProjectile
     private List<GameObject> shotsRemaining;
     private Dictionary<GameObject, Vector3> shotsToDirection;
 
+    private bool _isReady;
+
     protected override void Start()
+    {
+        // See GetShotgunShots() for why this is necessary.
+        if (_isReady)
+        {
+            return;
+        }
+
+        ReadyShotgunShots();
+    }
+
+    private void ReadyShotgunShots()
     {
         base.Start();
         if (shotPrefab == null)
@@ -29,6 +40,9 @@ public class ShotgunShot : PlayerProjectile
         // TODO(Improvement): To allow for flexibility and simpler code, allow for number of shots
         // to be specified. Then divide the 180 deg in front of player by shot number and send the
         // shots along those paths. Could then instantiate them in a loop.
+        
+        // Whereas in TripleShot we set the lasers as child objects, I generate them dynamically here so that I can 
+        // flexibly move them in different directions and allow the number of shots to be expanded in the future.
         leftShot = Instantiate(
             shotPrefab,
             transform.position, Quaternion.identity);
@@ -39,16 +53,21 @@ public class ShotgunShot : PlayerProjectile
             shotPrefab,
             transform.position, Quaternion.identity);
         shotsRemaining = new List<GameObject>() {leftShot, rightShot, frontShot};
+        foreach (GameObject shot in shotsRemaining)
+        {
+            shot.transform.parent = this.transform;
+        }
         shotsToDirection = new  Dictionary<GameObject, Vector3>()
-       {
-           {leftShot, new Vector3(-1, 1, 0)},   // Move diagonal upwards to the left. 
-           {rightShot, new Vector3(1, 1, 0)},   // Move diagonal upwards to the right. 
-           {frontShot, Vector3.up},
-       };
-       if (shotsRemaining == null || shotsRemaining.Count == 0)
-       {
-           Debug.LogError("ShotgunShot couldn't find any child shot objects.");
-       }
+        {
+            {leftShot, new Vector3(-1, 1, 0)},   // Move diagonal upwards to the left. 
+            {rightShot, new Vector3(1, 1, 0)},   // Move diagonal upwards to the right. 
+            {frontShot, Vector3.up},
+        };
+        if (shotsRemaining == null || shotsRemaining.Count == 0)
+        {
+            Debug.LogError("ShotgunShot couldn't find any child shot objects.");
+        }
+        _isReady = true;
     }
 
     private void Update()
@@ -90,31 +109,30 @@ public class ShotgunShot : PlayerProjectile
             shotsRemaining.Remove(shot);
         }
     }
-
-    public List<GameObject> GetShotgunShots()
+    
+    public List<Transform> GetShotgunShots()
     {
-        List<GameObject> _existentShotgunShots = new List<GameObject>();
-        // TODO: Test what happens in calling code when one of the shotguns shots is destroyed, is it really not
-        // sent to caller?
-        if (leftShot)
+        // TODO(Improvement): This is necessary because Player might call this method before Start() has been called
+        // here which will then cause the WeaponManager to not know about the shots, and then cause the AvoidEnemy to
+        // not known about them to avoid them. This allows up to workaround that, but it's not elegant. It's not worth
+        // changing how Unity script ordering works just for a couple scripts though.
+        if (!_isReady)
         {
-            _existentShotgunShots.Add(leftShot);
+            ReadyShotgunShots();
         }
-        if (frontShot)
+        
+        List<Transform> childShots = new List<Transform>();
+        for (int i = 0; i < this.transform.childCount; i++)
         {
-            _existentShotgunShots.Add(frontShot);
+            childShots.Add(this.transform.GetChild(i));
         }
-        if (rightShot)
-        {
-            _existentShotgunShots.Add(rightShot);
-        }
-
-        return _existentShotgunShots;
+        
+        return childShots;
     }
 
     protected override void OnDestroy()
     {
-        foreach (GameObject shotgunShot in GetShotgunShots())
+        foreach (Transform shotgunShot in GetShotgunShots())
         {
             _weaponManager.RemovePlayerShot(shotgunShot.transform);
         }

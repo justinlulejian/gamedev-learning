@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using UnityEditor;
 using UnityEngine;
 
 // This Enemy avoids shots that are within _avoidDistanceTrigger and that are actually travelling towards it. Otherwise
@@ -12,7 +10,9 @@ public class AvoidShotEnemy : Enemy
     [SerializeField] 
     private float _avoidDistanceTrigger = 5f;
 
-    // private bool _avoidingPlayerShot;
+    [SerializeField] 
+    private GameObject _deathPrefab;
+
     private Vector3 _avoidMovePosition ;
     private Vector3 _avoidMoveDistance = new Vector3(3, 0, 0);
     private bool _avoidAnimRunning;
@@ -28,34 +28,33 @@ public class AvoidShotEnemy : Enemy
     private bool _avoidAnimComplete = true;
     
     private WeaponManager _weaponManager;
-
+    
     protected override void Start()
     {
         base.Start();
         _animSlerpTime = _movementLerpTime = 1.0f;  // Avoid movement and anim should complete at the same time.
         _origRotation = this.transform.rotation;
         _weaponManager = GameObject.Find("Weapon_Manager").GetComponent<WeaponManager>();
+        // -1 == left, 1 == right
+        float avoidDirection = UnityEngine.Random.value > 0.5 ? -1f : 1f;
+        _avoidMoveDistance = new Vector3(3 * avoidDirection, 0, 0);
+        _aggroTowardsPlayer = false;
         
         if (_weaponManager == null) {
             Debug.LogError("Weapons manager is null when creating player avoid shot enemy.");
         }
     }
 
-    // TODO- update: doesn't avoid shotgun shot with same problem as TripleShot, it's Start() doesn't get called before
-    // we call the method to get them so it doesn't find them...might have to refactor them to be child objects
-    // so that I can query for them when that method is called? :/
+    protected override EnemyMovementType ChooseMovementType()
+    {
+        return EnemyMovementType.StraightDown;
+    }
 
-    // TODO: Next: figure out the right/best way to have the avoid consistently avoid the lasers and then expand/test to
-    // shotgunshot and missile (missile may just always win, nbd). I'd like it if the adjustment was dynamic so that
-    // it'll just move enough out of the way to miss rather than a static distance, but if too complicated then just do
-    // a static amount that works at least for lasers/shotgunshot. Also make sure cooldown exists because that'll prevent
-    // them from indef avoid shots. Also OnEnemyDestroy anim spawns really big vs size of enemy, can we scale it down?
     protected override void CalculateMovement()
     {
         List<Transform> playerShots = _weaponManager.GetPlayerShots();
         Transform playerShotInAvoidRange = ClosestPlayerShotInAvoidRange(playerShots);
 
-        // TODO: confirm playerShotInAvoidRange being null returns false.
         // TODO(Improvement): I feel like the string of &&s here is me missing something that would make this more
         // elegant.
         if (playerShotInAvoidRange && PlayerShotOnCollisionCourse(playerShotInAvoidRange) &&
@@ -63,10 +62,6 @@ public class AvoidShotEnemy : Enemy
         {
             _tryAvoidPlayerShot = true;
             _avoidActionsAndCooldownComplete = false;
-            Debug.Log("Avoid enemy will try to avoid.");
-            // TODO: Add if check if cooldown has passed for moving. Then reset cooldown if it has passed. We can use
-            // player fire logic, but it'll only be subtracted from if we're not actively trying to move away from a
-            // shot already.
         }
 
         // This loop is separate from above to ensure we don't tie the movement and anim to whether a shot is in range.
@@ -76,8 +71,7 @@ public class AvoidShotEnemy : Enemy
             StartCoroutine(AvoidPlayerShotMovementAnimAndCooldownRoutine());
         }
         
-        // TODO: see how this interacts before/during/after avoiding works.
-        // StraightDownMovement();
+        StraightDownMovement();
     }
 
     private Transform ClosestPlayerShotInAvoidRange(List<Transform> playerShots)
@@ -87,7 +81,6 @@ public class AvoidShotEnemy : Enemy
         float closestPlayerShotDistance = Mathf.Infinity;
         foreach (Transform playerShot in playerShots)
         {
-            // TODO: see in debug why this could be null? Shouldn't it be getting removed on destroy?
             if (playerShot)
             {
                 float playerShotDistance = Vector3.Distance(playerShot.position, this.transform.position);
@@ -111,19 +104,17 @@ public class AvoidShotEnemy : Enemy
         ContactFilter2D contactFilter = new ContactFilter2D().NoFilter();
         // 30 is arbitrarily chosen since I don't think we'll ever have more than 30 colliders on screen at one time.
         RaycastHit2D[] hits = new RaycastHit2D[30];
-        Physics2D.Raycast(playerShot.position, Vector3.up, contactFilter:contactFilter, results:hits);
+        Physics2D.Raycast(
+            playerShot.position, playerShot.up, contactFilter:contactFilter, results:hits);
         foreach (RaycastHit2D hit in hits)
         {
-            // TODO: For some reason it takes two shots to destroy enemy...
             if (hit.transform == this.transform)
             {
-                Debug.DrawRay(playerShot.position, transform.TransformDirection(Vector3.up) * hit.distance, Color.yellow);
-                Debug.Log("Player shot will hit enemy.");
+                
+                // Debug.DrawLine(playerShot.position, transform.position, Color.yellow, duration:3f);
                 return true;
             }
         }
-        Debug.DrawRay(playerShot.position, transform.TransformDirection(Vector3.up) * 1000, Color.red);
-        Debug.Log("Player shot will NOT hit enemy.");
         return false;
     }
 
@@ -150,9 +141,6 @@ public class AvoidShotEnemy : Enemy
         float movementCurrentLerpTime = 0f;
         Vector3 startPosition = transform.position;
         Vector3 avoidMovePosition = startPosition + _avoidMoveDistance;
-        Debug.Log(
-            $"Avoid enemy trying to move away to pos: " +
-            $"{avoidMovePosition.ToString()} from {startPosition.ToString()}");
         while (movementCurrentLerpTime < _movementLerpTime)
         {
             AvoidPlayerShot(startPosition, avoidMovePosition, ref movementCurrentLerpTime);
@@ -177,7 +165,6 @@ public class AvoidShotEnemy : Enemy
 
         float interpValue = movementCurrentLerpTime / _movementLerpTime;
         interpValue = easeOutCircT(interpValue);
-        // Debug.Log($"Interp value: {interpValue.ToString()}");
         transform.position = Vector3.Lerp(startPosition, avoidMovePosition, interpValue);
     }
     
@@ -212,5 +199,21 @@ public class AvoidShotEnemy : Enemy
         // https://forum.unity.com/threads/by-pass-the-shortest-route-aspect-of-quaternion-slerp.459429/#post-2982421
         transform.rotation = _origRotation * Quaternion.AngleAxis(
             360 * animCurrentSlerpTime / _animSlerpTime, Vector3.up);  // Vector3.up in 2D is y.
+    }
+    
+    protected override void DestroyEnemy()
+    {
+        Instantiate(_deathPrefab, transform.position, Quaternion.identity);
+        if (_audioSource.enabled)
+        {
+            _audioSource.Play();
+        }
+        Destroy(GetComponent<PolygonCollider2D>());
+        // TODO(Improvement): This causes a bit of a delay in when the enemy sprite disappears and when the explosion
+        // starts. Destroying the SpriteRenderer with a delay instead of SetActive(false) causes player to get damaged
+        // if they go into explosion after shooting them so that doesn't work as-is.
+        this.gameObject.SetActive(false);
+        base.WasDefeated();
+        base.RemoveEnemyFromGame(2.8f);
     }
 }
