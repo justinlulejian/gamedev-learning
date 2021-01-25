@@ -13,6 +13,8 @@ TagManager:
   - ShotgunShot
   - BossLaser
   - BossCircleShot
+  - AOE_Enemy_Shot
+  - AOE_Enemy_Explosion
   layers:
   - Default
   - TransparentFX

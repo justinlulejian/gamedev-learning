@@ -81,6 +81,7 @@ public class Powerup : MonoBehaviour
     if (other.CompareTag("Player"))
     {
       Player player = other.transform.GetComponent<Player>();
+      // TODO(Improvement): This sound is very quiet in comparison to all the other sounds.
       AudioSource.PlayClipAtPoint(_pickupAudioClip, transform.position);
       if (player != null)
       {
