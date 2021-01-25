@@ -257,11 +257,12 @@ MonoBehaviour:
   _aggroTowardsPlayer: 0
   _aggroRammingDistanceToPlayer: 5
   _audioSource: {fileID: 3946462044123910360}
-  _shieldsPrefab: {fileID: 3051007149966386695, guid: 794b5e9eeed1e1d4e81260b87bd61304,
-    type: 3}
+  _shieldsPrefab: {fileID: 8292132017004801401}
   _aoeShotPrefab: {fileID: 8430207881822779510, guid: 742e052130627fe418d25330f2896a18,
     type: 3}
   _aoeFireRate: 3
+  _deathPrefab: {fileID: 8950007561980157478, guid: 4163c9195c5fc734badcbf96b2fb12fc,
+    type: 3}
 --- !u!1001 &6432487119378877310
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -337,15 +338,21 @@ PrefabInstance:
     - target: {fileID: 8180865537261429573, guid: 794b5e9eeed1e1d4e81260b87bd61304,
         type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.36875
+      value: 0.32343748
       objectReference: {fileID: 0}
     - target: {fileID: 8180865537261429573, guid: 794b5e9eeed1e1d4e81260b87bd61304,
         type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.2875
+      value: 0.32855624
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 794b5e9eeed1e1d4e81260b87bd61304, type: 3}
+--- !u!1 &8292132017004801401 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3051007149966386695, guid: 794b5e9eeed1e1d4e81260b87bd61304,
+    type: 3}
+  m_PrefabInstance: {fileID: 6432487119378877310}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2939879863519635515 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8180865537261429573, guid: 794b5e9eeed1e1d4e81260b87bd61304,

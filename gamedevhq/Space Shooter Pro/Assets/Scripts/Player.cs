@@ -74,6 +74,8 @@ public class Player : MonoBehaviour
   [SerializeField] 
   private AudioClip _shotgunAudioClip;
   [SerializeField] 
+  private AudioClip _damageAudioClip;
+  [SerializeField] 
   private GameObject _explosionPrefab;
 
   [SerializeField] 
@@ -353,6 +355,7 @@ public class Player : MonoBehaviour
     }
     
     _mainCamera.ShakeCamera(2f);
+    AudioSource.PlayClipAtPoint(_damageAudioClip, transform.position);
     
     _lives--;
     _uiManager.UpdateLives(_lives);

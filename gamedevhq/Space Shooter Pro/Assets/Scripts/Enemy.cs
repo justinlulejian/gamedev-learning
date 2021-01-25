@@ -20,11 +20,12 @@ public class Enemy : MonoBehaviour
 
   [SerializeField] 
   protected float _speed = 4f;
-
+  
   protected enum EnemyMovementType
   {
     StraightDown,
     SweepIn,
+    ZigZag,
   }
   protected EnemyMovementType _enemyMovementType;
   private protected Vector3 _startPosition;
@@ -76,12 +77,10 @@ public class Enemy : MonoBehaviour
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
-    // TODO: revert these once done.
-    // _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
+    _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
     _enemyMovementType = ChooseMovementType();
-    _startPosition = new Vector3(1, 5, 0);
-    // _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
-    // _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
+    _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
+    _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
     _spriteRenderer = this.GetComponent<SpriteRenderer>();
     
     if (_enemyMovementType == EnemyMovementType.SweepIn)
@@ -155,12 +154,11 @@ public class Enemy : MonoBehaviour
     
     switch (enemyMovementType)
     {
-      case EnemyMovementType.StraightDown:
+      case EnemyMovementType.StraightDown: case EnemyMovementType.ZigZag:
         // TODO(Improvement): adjust random pos created to ensure enemy sprites don't overlap on one
         // another.
         // Spawn in a random position along top of screen.
         startPosition = new Vector3(Random.Range(-8f, 8f), 7, 0);
-        // startPosition = transform.position;
         break;
       case EnemyMovementType.SweepIn:
         float sideOfMap = Random.value > 0.5f ? -11f : 11f;  // -11 is left, 11 is right.
@@ -242,6 +240,9 @@ public class Enemy : MonoBehaviour
       case EnemyMovementType.SweepIn:
         SweepInMovement();
         break;
+      case EnemyMovementType.ZigZag:
+        ZigOrZagMovement();
+        break;
     }
   }
 
@@ -282,6 +283,15 @@ public class Enemy : MonoBehaviour
     float interpValue = _movementCurrentLerpTime / _movementLerpTime;
     interpValue = Mathf.Sin(interpValue * Mathf.PI * 0.5f);  // "sinerp"
     transform.position = Vector3.Lerp(_startPosition, _endPosition, interpValue);
+  }
+  
+  private void ZigOrZagMovement()
+  {
+    StraightDownMovement();
+    
+    // https://handyopinion.com/game-object-zigzag-movement-from-top-to-bottom-in-unity/
+    transform.position = transform.position + transform.right * (Mathf.Sin(Time.time * 1f) / 35f);
+
   }
   
   protected virtual void PeriodicFireLasers()
@@ -327,7 +337,7 @@ public class Enemy : MonoBehaviour
       }
       // TODO(bug): If player destroyed by enemy/boss this can null reference.
       // Fire on player behind them.
-      if (ObjectsInDirectionOfEnemy(new List<GameObject> {_player.gameObject}, Vector3.up))
+      if (_player != null && ObjectsInDirectionOfEnemy(new List<GameObject> {_player.gameObject}, Vector3.up))
       {
         FireLasers(Vector3.up);
       }

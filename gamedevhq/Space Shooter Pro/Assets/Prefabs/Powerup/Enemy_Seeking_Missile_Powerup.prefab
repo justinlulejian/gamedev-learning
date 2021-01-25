@@ -120,6 +120,7 @@ MonoBehaviour:
   _speed: 3
   _pickupAudioClip: {fileID: 8300000, guid: 5ee343246919d2b4bba63ae629e95494, type: 3}
   _powerupID: 5
+  _playerCollectingSpeedMultiplier: 2
 --- !u!61 &6168919967778573011
 BoxCollider2D:
   m_ObjectHideFlags: 0
