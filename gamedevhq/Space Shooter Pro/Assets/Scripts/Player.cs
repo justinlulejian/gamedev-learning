@@ -28,6 +28,8 @@ public class Player : MonoBehaviour
   [SerializeField]
   private int _lives = 3;
   private SpawnManager _spawnManager;
+  private WeaponManager _weaponManager;
+
 
   [SerializeField]
   private bool _isTripleShotActive = false;
@@ -99,6 +101,7 @@ public class Player : MonoBehaviour
   void Start()
   {
     _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
+    _weaponManager = GameObject.Find("Weapon_Manager").GetComponent<WeaponManager>();
     _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
     _audioSource = GetComponent<AudioSource>(); 
     _damageObjects = new List<GameObject>{_leftEngineDamage, _rightEngineDamage};
@@ -109,9 +112,6 @@ public class Player : MonoBehaviour
     _spedUpPlayerSpeed = _speed * _speedMultipler;
     _slowedDownPlayerSpeed = _speed / _speedMultipler;
    
-    // TODO: change this back once done with boss ai.
-    transform.position = new Vector3(0, 0, 0);
-    
     _uiManager.UpdateAmmoCount(GetCurrentAmmoCount());
 
     _thrusterTimeSecondsRemaining = _thrusterTimeSeconds;
@@ -136,6 +136,9 @@ public class Player : MonoBehaviour
     }
     if (_explosionPrefab == null) {
       Debug.LogError("explosionPrefab is null when creating player.");
+    }
+    if (_weaponManager == null) {
+      Debug.LogError("Weapons manager is null when creating player.");
     }
   }
 
@@ -229,21 +232,27 @@ public class Player : MonoBehaviour
     if (_isTripleShotActive)
     {
       GameObject tripleShot = InstantiatePrefabAndPlayAudioClip(_tripleShotPrefab, _laserAudioClip);
-      foreach (Laser laser in tripleShot.GetComponentsInChildren<Laser>())
+      foreach (Laser laser in tripleShot.GetComponent<TripleShot>().GetChildLasers())
       {
-        laser.LaserDirection= Vector3.up;
+        laser.LaserDirection = Vector3.up;
+        _weaponManager.AddPlayerShot(laser.transform);
       }
       return;
     } else if (_isMissleShotActive)
     {
-      InstantiatePrefabAndPlayAudioClip(
+      GameObject missileShot = InstantiatePrefabAndPlayAudioClip(
         _missilePrefab, _missileAudioClip, positionOffset:new Vector3(0, 1f, 0));
+      _weaponManager.AddPlayerShot(missileShot.transform);
       return;
     }
     else if (_isShotgunShotActive)
     {
-      InstantiatePrefabAndPlayAudioClip(
+      GameObject _shotgunShot = InstantiatePrefabAndPlayAudioClip(
         _shotgunPrefab, _shotgunAudioClip, positionOffset:new Vector3(0, 1f, 0));
+      foreach (Transform shotgunShot in _shotgunShot.GetComponent<ShotgunShot>().GetShotgunShots())
+      {
+        _weaponManager.AddPlayerShot(shotgunShot);
+      }
       return;
     }
     
@@ -253,9 +262,24 @@ public class Player : MonoBehaviour
       GameObject laser = InstantiatePrefabAndPlayAudioClip(
         _laserPrefab, _laserAudioClip, positionOffset: new Vector3(0, 1.05f, 0));
       laser.GetComponent<Laser>().LaserDirection = Vector3.up;
+      _weaponManager.AddPlayerShot(laser.transform);
       ReduceAmmoCount();
     }
   }
+
+  // public List<Transform> GetProjectileTransforms()
+  // {
+  //   List<Transform> projectiles = new List<Transform>();
+  //   for (int i = 0; i < _weaponManager.transform.childCount; i++)
+  //   {
+  //     Transform projectile = _weaponManager.transform.GetChild(i);
+  //     if (projectile)
+  //     {
+  //       projectiles.Add(projectile);
+  //     }
+  //   }
+  //   return projectiles;
+  // }
 
   private GameObject InstantiatePrefabAndPlayAudioClip(
     GameObject prefab, AudioClip audioClip, Vector3 positionOffset = default)
