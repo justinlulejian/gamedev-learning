@@ -314,15 +314,10 @@ public class Player : MonoBehaviour
         Damage();
       }
     }
-    if (other.CompareTag("BossLaser"))
+    if (other.CompareTag("BossLaser") || other.CompareTag("BossCircleShot") || other.CompareTag("AOE_Enemy_Explosion"))
     {
       Damage();
     }
-    if (other.CompareTag("BossCircleShot"))
-    {
-      Damage();
-    }
-    
   }
   
   private void OnTriggerStay2D(Collider2D other)

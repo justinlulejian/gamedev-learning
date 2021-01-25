@@ -12,8 +12,8 @@ public class Enemy : MonoBehaviour
   
   [SerializeField]
   private GameObject _laserPrefab;
-  private float _canFire = -1f;
-  private float _fireRate = 3.0f;
+  protected float _canFire = -1f;
+  protected float _fireRate = 3.0f;
   private bool _defeated = false;
   // How many times the enemy has respawned at the top of the screen after reaching the bottom.
   private int _respawnCount = 0;
@@ -76,9 +76,11 @@ public class Enemy : MonoBehaviour
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
     _animator = gameObject.GetComponent<Animator>();
-    _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
+    // TODO: revert these once done.
+    // _shieldsPrefab.SetActive(Random.value > 0.5);  // 0.0-0.5 == false, 0.5-1.0 == true.
     _enemyMovementType = ChooseMovementType();
-    _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
+    _startPosition = new Vector3(1, 5, 0);
+    // _startPosition = SetStartPositionBasedOnMovementType(_enemyMovementType);
     // _aggroTowardsPlayer = Random.value > 0.5;  // 0.0-0.5 == false, 0.5-1.0 == true.
     _spriteRenderer = this.GetComponent<SpriteRenderer>();
     
@@ -282,7 +284,7 @@ public class Enemy : MonoBehaviour
     transform.position = Vector3.Lerp(_startPosition, _endPosition, interpValue);
   }
   
-  private protected void PeriodicFireLasers()
+  protected virtual void PeriodicFireLasers()
   {
     // TODO(bug): lasers can still fire during/after the death animation, we should check for
     // that start of that animation and not proceed with firing.
