@@ -32,12 +32,16 @@ public class SpawnManager : MonoBehaviour
   
   [SerializeField]
   private UIManager _uiManager;
+
+  [SerializeField] 
+  private WaveManager _waveManager;
   
   // Enemy spawn logic.
   // Since we use Fibonacci to calculate, numbers beyond 6 get very high. 
-  // TODO(bug): Sometimes when _numberOfEnemyWavesRemaining == 1 there are two enemies/two waves that spawn?
+  // TODO(bug): Sometimes when _numberOfWavesRemaining == 1 there are two enemies/two waves that spawn?
   [SerializeField] 
-  private int _numberOfEnemyWavesRemaining = 6;
+  private int _numberOfEnemyWaves = 6;
+  private int _waveNumber; // What wave we are currently on.
   [SerializeField] 
   private String _difficulty = "normal";
   private Dictionary<string, float> _difficultyToFactorMap = new Dictionary<string, float>()
@@ -55,7 +59,8 @@ public class SpawnManager : MonoBehaviour
     _player = GameObject.Find("Player").GetComponent<Player>();
     _powerupObjContainer = new List<Powerup>();
     _enemyContainer = _enemyContainerObj.GetComponent<EnemyContainer>();
-    
+    _waveManager = GameObject.Find("Wave_Manager").GetComponent<WaveManager>();
+
     if (_uiManager == null)
     {
       Debug.LogError("Couldn't find UiManager from SpawnManager");
@@ -72,72 +77,33 @@ public class SpawnManager : MonoBehaviour
     {
       Debug.LogError("No enemy types were provide to SpawnManager. Enemies might not spawn.");
     }
+    if (_waveManager == null)
+    {
+      Debug.LogError("Couldn't find WaveManager from SpawnManager");
+    }
   }
 
   public void StartSpawning()
   {
-    StartCoroutine(SpawnEnemyRoutine());
-    StartCoroutine(SpawnPowerupRoutine());
+    StartCoroutine(SpawnWaveRoutine());
   }
 
-  private int CalculateNumberOfEnemiesInWave(int enemyWaveNumber)
-  {
-    // Formula: https://math.hmc.edu/funfacts/fibonacci-number-formula/
-    // Graphical representation of difficulty levels to number of enemies
-    // https://www.desmos.com/calculator/legniuqsnt
-    return Mathf.CeilToInt(
-      ((Mathf.Abs(
-         (Mathf.Pow(_Phi, enemyWaveNumber) - Mathf.Pow(_phi, _enemyWaveNumber))
-         / Mathf.Sqrt(5)))
-       * _difficultyToFactorMap[_difficulty]));
-  }
 
-  private void SpawnBossWave()
-  {
-    _enemyContainer.AddEnemy(Instantiate(_bossPrefab));
-  }
 
-  private GameObject GetRandomEnemyType()
+  private IEnumerator SpawnWaveRoutine()
   {
-    if (_enemyTypes.Length == 0)
+    while (_waveNumber <= _numberOfEnemyWaves && _stopSpawning == false)
     {
-      Debug.LogError("_enemyTypes is empty in spawn manager.");
-      return null;
+      yield return new WaitUntil(() => _waveManager.NoWavesRunning());
+
+      _waveManager.SpawnWave(_waveNumber);
+      _waveNumber++;
     }
 
-    int randomEnemyTypeIndex = Random.Range(0, _enemyTypes.Length);
-    return _enemyTypes[randomEnemyTypeIndex];
-  }
-
-  private IEnumerator SpawnEnemyRoutine()
-  {
-    while (_numberOfEnemyWavesRemaining > 0 && _stopSpawning == false)
-    {
-      yield return new WaitUntil(() => _enemyContainer.NoEnemies());
-
-      if (_stopSpawning)
-      {
-        break;
-      } 
-      
-      _numberOfEnemyWavesRemaining--;
-      int numberOfEnemiesToSpawnForWave = CalculateNumberOfEnemiesInWave(_enemyWaveNumber);
-      while (numberOfEnemiesToSpawnForWave > 0)
-      {
-        _enemyContainer.AddEnemy(Instantiate(GetRandomEnemyType()));
-        numberOfEnemiesToSpawnForWave--;
-      }
-
-      _enemyWaveNumber++;
-    }
-
-    // Wait until the final wave have been cleared.
-    yield return new WaitUntil(() => _enemyContainer.NoEnemies());
-    if (_numberOfEnemyWavesRemaining == 0)
-    {
+    // Wait until all enemies in the final wave have been cleared before proceeding.
+    yield return new WaitUntil(() => _waveManager.NoWavesRunning());
       // TODO(Improvement): Change music to boss music on spawn, then play success music on win.
-      SpawnBossWave();
-    }
+    _waveManager.SpawnBossWave();
     
     // Display win for player since all waves appear to be done, but only if Player survived.
     yield return new WaitUntil(() => _enemyContainer.NoEnemies() && !_player.IsDestroyed);
@@ -221,8 +187,8 @@ public class SpawnManager : MonoBehaviour
     {
       Destroy(powerUp.gameObject);
     }
-    // TODO(bug): Delete all laser and missile objects otherwise they (funnily) just float around after
-    // gameover if they are present when player dies.
+    // TODO: Delete all laser and missile objects otherwise they (funnily) just float around after
+    // gameover if they are present when player dies. Now possible with weapons manager?.
   }
 
   public void OnPlayerDeath()
