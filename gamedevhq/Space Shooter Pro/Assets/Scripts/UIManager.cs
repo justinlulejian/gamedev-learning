@@ -116,18 +116,16 @@ public class UIManager : MonoBehaviour
 
     // TODO(Improvement): These two ui methods should be inverted where callers call gamemanager,
     // which then calls UI manager to display relevant UI.
-    private void GameOverUI()
+    public void GameOverUI()
     {
         StartCoroutine(GameTextFlickerRoutine(_gameOverText));
         _restartText.gameObject.SetActive(true);
-        _gameManager.GameOver();
     }
     
     public void GameWinUI()
     {
         StartCoroutine(GameTextFlickerRoutine(_gameWinText));
         _restartText.gameObject.SetActive(true);
-        _gameManager.GameOver();
     }
 
     public bool IsThrusterBarRestoring()
