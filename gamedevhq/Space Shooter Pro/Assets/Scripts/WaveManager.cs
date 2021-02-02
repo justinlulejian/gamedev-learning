@@ -23,7 +23,7 @@ public class WaveManager : MonoBehaviour
     // Powerups
     [SerializeField]
     private GameObject _powerupContainerObject;
-    private List<Powerup> _powerupObjContainer;
+    private List<GameObject> _powerupObjContainer;
     
     // Spawn chances
     // TODO(Improvement): Change the ammo pickup prefab to the ammo box sprite I have in the proj.
