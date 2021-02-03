@@ -104,7 +104,7 @@ public class Player : MonoBehaviour
   {
     _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
     _weaponManager = GameObject.Find("Weapon_Manager").GetComponent<WeaponManager>();
-    _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
+    _uiManager = GameObject.Find("UI_Manager").GetComponent<UIManager>();
     _audioSource = GetComponent<AudioSource>(); 
     _damageObjects = new List<GameObject>{_leftEngineDamage, _rightEngineDamage};
     _shieldsRenderer = _shieldsPrefab.GetComponent<SpriteRenderer>();

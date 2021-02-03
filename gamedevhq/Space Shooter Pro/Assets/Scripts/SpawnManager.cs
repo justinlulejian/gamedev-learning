@@ -8,30 +8,18 @@ using Random = UnityEngine.Random;
 public class SpawnManager : MonoBehaviour
 {
   [SerializeField]
-  private GameObject[] _enemyTypes;
-  [SerializeField]
-  private GameObject _bossPrefab;
-  [SerializeField]
   private GameObject _enemyContainerObj;
-
   private EnemyContainer _enemyContainer;
-  // TODO(Improvement): Change the ammo pickup prefab to the ammo box sprite I have in the proj.
+  
   [SerializeField]
   private GameObject _powerupContainer;
   private List<Powerup> _powerupObjContainer;
-  [SerializeField]
-  private GameObject[] _powerups;
-  [SerializeField]
-  private float[] _powerUpWeights;  // Weights to use when calculating spawn rate.
-  
+
   [SerializeField]
   private bool _stopSpawning = false;
   
-  [SerializeField]
   private Player _player;
-  
   private WaveManager _waveManager;
-
   private GameManager _gameManager;
   
   // Enemy spawn logic.
@@ -39,6 +27,7 @@ public class SpawnManager : MonoBehaviour
   // TODO(bug): Sometimes when _numberOfWavesRemaining == 1 there are two enemies/two waves that spawn?
   [SerializeField] 
   private int _numberOfEnemyWaves = 6;
+  // TODO: test what happens when _numberOfEnemyWaves == 0.
   private int _waveNumber; // What wave we are currently on.
 
   private void Start()
@@ -56,10 +45,6 @@ public class SpawnManager : MonoBehaviour
     if (_enemyContainer == null)
     {
       Debug.LogError("Enemy container is null from SpawnManager.");
-    }
-    if (_enemyTypes.Length == 0)
-    {
-      Debug.LogError("No enemy types were provide to SpawnManager. Enemies might not spawn.");
     }
     if (_waveManager == null)
     {
@@ -81,19 +66,19 @@ public class SpawnManager : MonoBehaviour
   {
     while (_waveNumber <= _numberOfEnemyWaves && _stopSpawning == false)
     {
-      yield return new WaitUntil(() => _waveManager.NoWavesRunning());
+      yield return new WaitUntil(() => CanRequestAnotherWave());
 
       _waveManager.SpawnWave(_waveNumber);
       _waveNumber++;
     }
 
     // Wait until all enemies in the final wave have been cleared before proceeding to boss.
-    yield return new WaitUntil(() => _waveManager.NoWavesRunning());
-      // TODO(Improvement): Change music to boss music on spawn, then play success music on win.
+    yield return new WaitUntil(() => CanRequestAnotherWave());
+    // TODO(Improvement): Change music to boss music on spawn, then play success music on win.
     _waveManager.SpawnBossWave();
     
     // Display win for player since all waves appear to be done, but only if Player survived.
-    yield return new WaitUntil(() => _waveManager.NoWavesRunning() || _player.IsDestroyed);
+    yield return new WaitUntil(() => CanRequestAnotherWave() || _player.IsDestroyed);
     _stopSpawning = true;
 
     if (_player.IsDestroyed)
@@ -120,6 +105,23 @@ public class SpawnManager : MonoBehaviour
   public List<Enemy> GetAllOnScreenEnemies()
   {
     return _enemyContainer.GetEnemies();
+  }
+
+  // If the wave manager is running/spawning or if there are enemies on the screen we should not initiate another wave.
+  private bool CanRequestAnotherWave()
+  {
+    return (_waveManager.WaveNotRunning() && GetAllOnScreenEnemies().Count + GetAllOnScreenPowerUps().Count == 0);
+  }
+
+  public void AddEnemyToGame(GameObject enemy)
+  {
+    _enemyContainer.AddEnemy(enemy.GetComponent<Enemy>());
+  }
+  
+  public void AddPowerUpToGame(GameObject powerUp)
+  {
+    _powerupObjContainer.Add(_powerupContainer.GetComponent<Powerup>());
+    powerUp.transform.parent = _powerupContainer.transform;
   }
   
   public void RemoveEnemyFromGame(Enemy enemy, float afterTime)

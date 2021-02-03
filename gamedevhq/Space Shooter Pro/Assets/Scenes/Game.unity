@@ -145,10 +145,10 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 59167725}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -580.4673, y: -271.97604, z: 8.875}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 252880503}
+  m_Father: {fileID: 1755951543}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &247836296
@@ -258,15 +258,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 910a139b165d40244ad3db874833f02a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _enemyTypes: []
   _bossPrefab: {fileID: 4885091181775175149, guid: 949d418c18cebfd4a86e8daf508fee9b,
     type: 3}
-  _enemyContainerObject: {fileID: 578887005}
-  _powerupContainerObject: {fileID: 59167725}
-  _waveSpawnObjects: []
-  _waveSpawnWeights: []
-  _bossWaveSpawnObjects: []
-  _bossWaveSpawnWeights: []
+  _waveSpawnObjects:
+  - {fileID: 4287060788234644344, guid: b0cc5b45a16505c4195bc979ee9af15c, type: 3}
+  - {fileID: 4276623834322039274, guid: 59f80ac5dba88a840b1a3fef85a4cccd, type: 3}
+  - {fileID: 7078105996197805197, guid: ae50ca60cb6025c4a99a1540708740f4, type: 3}
+  - {fileID: 4482390072554363317, guid: 9125f82b871c5364aa6ff4d5a354cdd7, type: 3}
+  - {fileID: 1929016352519385081, guid: 94002eb5b7ed2d9468ad1adcdb6b8908, type: 3}
+  - {fileID: 1435638440639867065, guid: cfd477c051acbf3428d9f10374ed4c29, type: 3}
+  - {fileID: 8557178925314242122, guid: 676d9fc3387ed3d4c8ec979b59116435, type: 3}
+  - {fileID: 134908, guid: dcffff5d98c73e64b8935c2f9cb64291, type: 3}
+  - {fileID: 3962861844510630241, guid: d12352daa17e5a143a7df6c6a03aeef6, type: 3}
+  - {fileID: 7803426080503418360, guid: 6c6ad6fa4e8a3b24395e5a80af4be2b1, type: 3}
+  - {fileID: 3784937069146104167, guid: 1e578d51c4655004092c127444869de1, type: 3}
+  _waveSpawnWeights:
+  - 0.7
+  - 0.6
+  - 0.6
+  - 0.3
+  - 0.3
+  - 0.2
+  - 0.4
+  - 0.3
+  - 0.6
+  - 0.4
+  - 0.5
+  _bossWaveSpawnObjects:
+  - {fileID: 3784937069146104167, guid: 1e578d51c4655004092c127444869de1, type: 3}
+  - {fileID: 3962861844510630241, guid: d12352daa17e5a143a7df6c6a03aeef6, type: 3}
+  - {fileID: 134908, guid: dcffff5d98c73e64b8935c2f9cb64291, type: 3}
+  - {fileID: 8557178925314242122, guid: 676d9fc3387ed3d4c8ec979b59116435, type: 3}
+  - {fileID: 1929016352519385081, guid: 94002eb5b7ed2d9468ad1adcdb6b8908, type: 3}
+  - {fileID: 4482390072554363317, guid: 9125f82b871c5364aa6ff4d5a354cdd7, type: 3}
+  _bossWaveSpawnWeights:
+  - 0.7
+  - 0.7
+  - 0.4
+  - 0.4
+  - 0.5
+  - 0.2
+  _timeBetweenWaves: 3
+  _timeBetweenWavesMultipler: 1
 --- !u!4 &252880503
 Transform:
   m_ObjectHideFlags: 0
@@ -277,9 +310,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 580.4673, y: 271.97604, z: -8.875}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children:
-  - {fileID: 578887006}
-  - {fileID: 59167726}
+  m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -497,10 +528,10 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 578887005}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -580.4673, y: -271.97604, z: 8.875}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 252880503}
+  m_Father: {fileID: 1755951543}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &578887007
@@ -1922,7 +1953,9 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_Children:
+  - {fileID: 578887006}
+  - {fileID: 59167726}
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1938,34 +1971,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41ff80577df51bc44947af149dc9faf7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _enemyTypes:
-  - {fileID: 4287060788234644344, guid: b0cc5b45a16505c4195bc979ee9af15c, type: 3}
-  - {fileID: 4276623834322039274, guid: 59f80ac5dba88a840b1a3fef85a4cccd, type: 3}
-  - {fileID: 7078105996197805197, guid: ae50ca60cb6025c4a99a1540708740f4, type: 3}
-  _bossPrefab: {fileID: 4885091181775175149, guid: 949d418c18cebfd4a86e8daf508fee9b,
-    type: 3}
   _enemyContainerObj: {fileID: 578887005}
   _powerupContainer: {fileID: 59167725}
-  _powerups:
-  - {fileID: 4482390072554363317, guid: 9125f82b871c5364aa6ff4d5a354cdd7, type: 3}
-  - {fileID: 1929016352519385081, guid: 94002eb5b7ed2d9468ad1adcdb6b8908, type: 3}
-  - {fileID: 8557178925314242122, guid: 676d9fc3387ed3d4c8ec979b59116435, type: 3}
-  - {fileID: 3784937069146104167, guid: 1e578d51c4655004092c127444869de1, type: 3}
-  - {fileID: 3962861844510630241, guid: d12352daa17e5a143a7df6c6a03aeef6, type: 3}
-  - {fileID: 7803426080503418360, guid: 6c6ad6fa4e8a3b24395e5a80af4be2b1, type: 3}
-  - {fileID: 134908, guid: dcffff5d98c73e64b8935c2f9cb64291, type: 3}
-  - {fileID: 1435638440639867065, guid: cfd477c051acbf3428d9f10374ed4c29, type: 3}
-  _powerUpWeights:
-  - 0.7
-  - 0.7
-  - 0.7
-  - 0.7
-  - 0.7
-  - 0.3
-  - 0.5
-  - 0.7
   _stopSpawning: 0
-  _player: {fileID: 0}
   _numberOfEnemyWaves: 6
 --- !u!1 &1983934739
 GameObject:

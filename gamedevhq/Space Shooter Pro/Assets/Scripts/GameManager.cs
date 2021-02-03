@@ -49,6 +49,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator WaitForRestartRoutine()
     {
+        // TODO: for some reason this doesn't work on death...
         while (!Input.GetKeyDown(KeyCode.R))
         {
             yield return null;

@@ -13,17 +13,15 @@ public class WaveManager : MonoBehaviour
     
     // Enemies
     [SerializeField]
-    private List<GameObject> _enemyTypes;
-    [SerializeField]
     private GameObject _bossPrefab;
-    [SerializeField]
-    private GameObject _enemyContainerObject;
-    private EnemyContainer _enemyContainer;
+    // [SerializeField]
+    // private GameObject _enemyContainerObject;
+    // private EnemyContainer _enemyContainer;
     
     // Powerups
-    [SerializeField]
-    private GameObject _powerupContainerObject;
-    private List<GameObject> _powerupObjContainer;
+    // [SerializeField]
+    // private GameObject _powerupContainerObject;
+    // private List<GameObject> _powerupObjContainer;
     
     // Spawn chances
     // TODO(Improvement): Change the ammo pickup prefab to the ammo box sprite I have in the proj.
@@ -53,11 +51,13 @@ public class WaveManager : MonoBehaviour
     
     // Spawn loop control.
     // This controls how many things we start spawning with and it'll be multiplied by 
-    // _numberOfThingsToSpawnInIterMultipler each time we spawn something. The result is that things
+    // _numberOfObjectsToCreateForSpawnMultipler each time we spawn something. The result is that things
     // get more hectic as the waves progress with more things being spawn per spawn loop.
-    private int _numberOfThingsToSpawnInIter = 1;
-    private float _numberOfThingsToSpawnInIterMultipler = 1.5f;
-    [SerializeField]
+    private bool _waveRunning;
+    private bool _waveSpawned;
+    private int _numberOfObjectsToCreateForSpawn = 1;
+    private float _numberOfObjectsToCreateForSpawnMultipler = 1.5f;
+    [SerializeField] [Tooltip("The amount of seconds between waves.")]
     private float _timeBetweenWaves = 3.0f;
     [SerializeField] [Tooltip("Values less than 1.0 reduce the time between waves after each wave" +
                               " finished. Values great than 1.0 increase it.")]
@@ -66,11 +66,19 @@ public class WaveManager : MonoBehaviour
     void Start()
     {
         _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
+        // _enemyContainer = _enemyContainerObject.GetComponent<EnemyContainer>();
+        // _powerupObjContainer = new List<GameObject>();
+        // StartCoroutine(MonitorWaveSpawnStatus());
 
         if (_spawnManager == null)
         {
             Debug.LogError("Spawn manager was missing from Wave Manager.");
         }
+        // if (_enemyContainer == null)
+        // {
+        //     Debug.LogError("Enemy container is null from SpawnManager.");
+        // }
+        
         
         
         Debug.Log($"difficulty selection by user is: {_difficultySelection}");
@@ -81,53 +89,61 @@ public class WaveManager : MonoBehaviour
         }
     }
 
+    // private IEnumerator MonitorWaveSpawnStatus()
+    // {
+    //     yield return new WaitUntil(() => _waveRunning && _waveSpawned);
+    //     yield return new WaitUntil(() => NumberOfObjectsInWaves() == 0);
+    //     _waveRunning = false;
+    //     _waveSpawned = false;
+    // }
+
     public void SpawnWave(int waveNumber)
     { 
-        SpawnWaveNumberRoutine(waveNumber);
+        StartCoroutine(SpawnWaveNumberRoutine(waveNumber));
+        _waveRunning = true;
     }
     
     public void SpawnBossWave()
     {
-        StartCoroutine(SpawnBossWaveRoutine());
+        _spawnManager.AddEnemyToGame(Instantiate(_bossPrefab));
     }
     
-    private IEnumerator SpawnBossWaveRoutine()
-    {
-        yield return null;
-        // _enemyContainer.AddEnemy(Instantiate(_bossPrefab));
-    }
 
     // TODO(checkpoint): should I duplicate this for boss wave or share the logic amongst the two
     // but provide the differences as parameters?
     private IEnumerator SpawnWaveNumberRoutine(int waveNumber)
     {
-        int numberOfObjectsToSpawnInWave = NumberOfSpawnsInWave(waveNumber);
-        while (numberOfObjectsToSpawnInWave > 0 && !_spawnManager.ShouldStopSpawning())
+        int numberOfSpawnsInWave = NumberOfSpawnsForWave(waveNumber);
+        while (numberOfSpawnsInWave > 0 && !_spawnManager.ShouldStopSpawning())
         {
-            for (int i = 0; i < _numberOfThingsToSpawnInIter; i++)
+            // TODO(checkpoint): It seems I can spawn all powerups and no enemies in a wave which is odd. I think I should
+            // influence the choices so that if more than one thing is spawning some % are enemies and some % are powerUps
+            // so that it can't be too biased? But then does that remove the need for linear algo?
+            // for (int i = 0; i < _numberOfObjectsToCreateForSpawn; i++)
+            // {
+            GameObject objectToSpawn = ChooseWeightedRandomSpawn();
+            GameObject objectSpawned = Instantiate(objectToSpawn,
+                new Vector3(UnityEngine.Random.Range(-8f, 8f), 7, 0),
+                Quaternion.identity);
+            if (objectSpawned.GetComponent<Powerup>())
             {
-                GameObject objectToSpawn = ChooseWeightedRandomSpawn();
-                Instantiate(objectToSpawn,
-                    new Vector3(UnityEngine.Random.Range(-8f, 8f), 7, 0),
-                    Quaternion.identity);
-                if (objectToSpawn.GetComponent<Powerup>())
-                {
-                    _powerupObjContainer.Add(objectToSpawn);
-                    objectToSpawn.transform.parent = _powerupContainerObject.transform;
-                }
-                else
-                {
-                    _enemyContainer.AddEnemy(objectToSpawn);
-                    objectToSpawn.transform.parent = _enemyContainerObject.transform;
-                }
-
-                numberOfObjectsToSpawnInWave--;
+                _spawnManager.AddPowerUpToGame(objectSpawned);
+            }
+            else
+            {
+                _spawnManager.AddEnemyToGame(objectSpawned);
             }
 
-            _numberOfThingsToSpawnInIter = Mathf.RoundToInt(
-                _numberOfThingsToSpawnInIter *_numberOfThingsToSpawnInIterMultipler);
+            numberOfSpawnsInWave--;
+            // }
+            // Every spawn we increase the number of things we spawn each time to increase difficulty as things progress
+            // _numberOfObjectsToCreateForSpawn = Mathf.RoundToInt(
+            //     _numberOfObjectsToCreateForSpawn *_numberOfObjectsToCreateForSpawnMultipler);
+            // TODO: This timing should move to spawn manager. Wave manager just spawn things for a wave whereas spawn
+            // manager decides when to spawn a wave.
             yield return new WaitForSeconds(_timeBetweenWaves * _timeBetweenWavesMultipler);
         }
+        _waveRunning = false;
     }
     
     private GameObject ChooseWeightedRandomSpawn()
@@ -162,24 +178,33 @@ public class WaveManager : MonoBehaviour
         return powerUpsRemainingInWave;
     }
     
-    public List<GameObject> AllSpawnsInWave()
+    // public int NumberOfObjectsInWaves()
+    // {
+    //     int numberOfPowerUps = _powerupObjContainer.Count
+    //     return _powerupObjContainer.Count + _enemyContainer.EnemyCount();
+    // }
+    //
+    // public bool WaveInProgress()
+    // {
+    //     // return _waveRunning && _waveSpawned;
+    //     return NumberOfObjectsInWaves() > 0;
+    // }
+    //
+    // public bool NoWavesRunning()
+    // {
+    //     return NumberOfObjectsInWaves() == 0;
+    //     // return _waveRunning == false;
+    // }
+    //
+
+    public bool WaveNotRunning()
     {
-        List<GameObject> allSpawnsInWave = new List<GameObject>();
-        return allSpawnsInWave;
+        return _waveRunning == false;
     }
-    
-    public bool WaveInProgress()
+    private int NumberOfSpawnsForWave(int waveNumber)
     {
-        return AllSpawnsInWave().Count > 0;
-    }
-    
-    public bool NoWavesRunning()
-    {
-        return AllSpawnsInWave().Count == 0;
-    }
-    
-    private int NumberOfSpawnsInWave(int waveNumber)
-    {
+        // Skip the first fib value being 0
+        waveNumber += 2;
         // Formula: https://math.hmc.edu/funfacts/fibonacci-number-formula/
         // Graphical representation of difficulty levels to number of enemies
         // https://www.desmos.com/calculator/legniuqsnt
@@ -188,10 +213,5 @@ public class WaveManager : MonoBehaviour
                  (Mathf.Pow(_Phi, waveNumber) - Mathf.Pow(_phi, waveNumber))
                  / Mathf.Sqrt(5)))
              * _difficultyToFactorMap[_difficultySelection]));
-    }
-
-    void Update()
-    {
-        
     }
 }
