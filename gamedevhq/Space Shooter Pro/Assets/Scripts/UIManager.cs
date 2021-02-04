@@ -16,6 +16,8 @@ public class UIManager : MonoBehaviour
     private Text _gameWinText;
     [SerializeField] 
     private Text _restartText;
+    [SerializeField] 
+    private Text _waveNumberText;
     [SerializeField]
     private Image _livesImage;
     [SerializeField]
@@ -69,26 +71,31 @@ public class UIManager : MonoBehaviour
         _scoreText.text = "Score: " + playerScore.ToString();
     }
     
+    public void UpdateWaveNumber(string waveNumber)
+    {
+        _waveNumberText.text = "Wave #: " + waveNumber;
+    }
+    
     public void UpdateAmmoCount(int ammoCount)
     {
         _ammoCountText.text = $"Ammo: {ammoCount.ToString()} / {_player.GetMaximumAmmoCount().ToString()}";
         if (ammoCount < 1)
         {
-            NotifyPlayerNoAmmo(ammoCount);
+            NotifyPlayerNoAmmo();
         }
     }
     
-    private void NotifyPlayerNoAmmo(int ammoCount)
+    private void NotifyPlayerNoAmmo()
     {
-        StartCoroutine(AmmoCountFlickerRoutine(ammoCount));
+        StartCoroutine(AmmoCountFlickerRoutine());
     }
     
     // TODO(Improvement): Try slightly stretching text to be larger then smaller in
     // animation to get player's attention that they are out of ammo. And/or create a
     // sound to also indicate it's out.
-    private IEnumerator AmmoCountFlickerRoutine(int ammoCount)
+    private IEnumerator AmmoCountFlickerRoutine()
     {
-        while (ammoCount < 1 && !_gameManager.IsGameOver)
+        while (_player.GetCurrentAmmoCount() < 1 && !_gameManager.IsGameOver)
         { 
             _ammoCountText.gameObject.SetActive(false);
             yield return new WaitForSeconds(0.5f);
@@ -110,24 +117,22 @@ public class UIManager : MonoBehaviour
 
         if (currentLives < 1)
         {
-            GameOverUI();
+            _gameManager.GameOver();
         }
     }
 
     // TODO(Improvement): These two ui methods should be inverted where callers call gamemanager,
     // which then calls UI manager to display relevant UI.
-    private void GameOverUI()
+    public void GameOverUI()
     {
         StartCoroutine(GameTextFlickerRoutine(_gameOverText));
         _restartText.gameObject.SetActive(true);
-        _gameManager.GameOver();
     }
     
     public void GameWinUI()
     {
         StartCoroutine(GameTextFlickerRoutine(_gameWinText));
         _restartText.gameObject.SetActive(true);
-        _gameManager.GameOver();
     }
 
     public bool IsThrusterBarRestoring()

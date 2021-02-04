@@ -49,7 +49,7 @@ public class BossEnemy : Enemy
             MoveToEndPosition();
         }
         OscillateMovement();
-        if (_specialWeaponsActive.Count == 0)
+        if (_specialWeaponsActive != null && _specialWeaponsActive.Count == 0)
         {
             PeriodicFireLasers();
         }
@@ -109,23 +109,32 @@ public class BossEnemy : Enemy
         }
     }
 
-    protected override void DestroyEnemy()
+    // When the Boss is destroyed or we want to clean up the boss, it doesn't make sense for the laser to persist after
+    // it disappears since it seems attached to the Boss sprite.
+    private void DestroyLaserSpecialWeapon()
     {
+        foreach (GameObject weapon in _specialWeaponsActive)
+        {
+            if (weapon != null && weapon.GetComponent<BossLaserAttack>() != null)
+            {
+                Destroy(weapon);
+            }
+        }
+    }
+
+    // TODO(bug): Crashing into boss causes boss to be killed immediately even if it would've survived? Might not be
+    // true but confirm.
+    public override void DestroyEnemy()
+    {
+        base.WasDefeated();
         Instantiate(_deathPrefab, transform.position, Quaternion.identity);
         if (_audioSource.enabled)
         {
             _audioSource.Play();
         }
         Destroy(GetComponent<PolygonCollider2D>());
-        base.WasDefeated();
         this.gameObject.SetActive(false);
-        foreach (GameObject weapon in _specialWeaponsActive)
-        {
-            if (weapon != null)
-            {
-                Destroy(weapon);
-            }
-        }
+        DestroyLaserSpecialWeapon();
         base.RemoveEnemyFromGame(2.8f);
     }
 
@@ -142,7 +151,6 @@ public class BossEnemy : Enemy
             _specialWeaponsActive.Add(laserAttack);
             yield return new WaitForSeconds(_specialAttackCooldown);
             GameObject circleAttack = Instantiate(_circleAttackPrefab, transform.position, Quaternion.identity);
-            circleAttack.transform.parent = transform;
             _specialWeaponsActive.Add(circleAttack);
         }
     }
@@ -161,5 +169,10 @@ public class BossEnemy : Enemy
                 }
             }
         }
+    }
+
+    private void OnDestroy()
+    {
+        DestroyLaserSpecialWeapon();
     }
 }
