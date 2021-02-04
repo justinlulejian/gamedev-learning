@@ -14,6 +14,11 @@ public class EnemyContainer : MonoBehaviour
         return _enemies;
     }
 
+    public int EnemyCount()
+    {
+        return _enemies.Count;
+    }
+
     public void AddEnemy(Enemy enemy)
     {
         _enemies.Add(enemy);

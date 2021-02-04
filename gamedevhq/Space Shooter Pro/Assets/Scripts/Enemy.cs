@@ -72,7 +72,8 @@ public class Enemy : MonoBehaviour
   
   protected virtual void Start()
   {
-    _player = GameObject.Find("Player").GetComponent<Player>();
+    GameObject player = GameObject.Find("Player");
+    _player = player != null ? player.GetComponent<Player>() : null;
     _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
     _animator = gameObject.GetComponent<Animator>();
     _audioSource = GetComponent<AudioSource>();
@@ -92,8 +93,7 @@ public class Enemy : MonoBehaviour
     StartCoroutine(FireOnPowerUpsAndPlayerBehindRoutine());
     StartCoroutine(AggroEnemySpriteColorRoutine());
 
-    // TODO(?): Is !obj same as == null?
-    if (!_player)
+    if (_player == null)
     {
       Debug.LogError("Player is null from Enemy.");
     }
@@ -171,8 +171,13 @@ public class Enemy : MonoBehaviour
 
   private bool WithinRammingDistanceToPlayer()
   {
-   return Vector3.Distance(
-      this.transform.position, _player.transform.position) <= _aggroRammingDistanceToPlayer;
+    if (_player != null)
+    {
+      return Vector3.Distance(
+        this.transform.position, _player.transform.position) <= _aggroRammingDistanceToPlayer;
+    }
+
+    return false;
   }
 
   // Blink the enemy red when chasing aggro to show status.
@@ -298,7 +303,7 @@ public class Enemy : MonoBehaviour
   {
     // TODO(bug): lasers can still fire during/after the death animation, we should check for
     // that start of that animation and not proceed with firing.
-    if (!_defeated && Time.time > _canFire)
+    if (!IsDefeated() && Time.time > _canFire)
     {
       FireLasers(Vector3.down);
     }
@@ -497,10 +502,10 @@ public class Enemy : MonoBehaviour
     _spawnManager.RemoveEnemyFromGame(this, afterTime);
   }
 
-  protected virtual void DestroyEnemy()
+  public virtual void DestroyEnemy()
   {
-    _animator.SetTrigger("OnEnemyDeath");
     WasDefeated();
+    _animator.SetTrigger("OnEnemyDeath");
     _speed = 0f;
     // TODO(Improvement): try to make this work in the future, at the moment it never gets to setting animFinished
     // as true.
