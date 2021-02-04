@@ -10,14 +10,20 @@ public class GameManager : MonoBehaviour
     private bool _gameOver = false;
 
     private UIManager _uiManager;
+    private SpawnManager _spawnManager;
 
     private void Start()
     {
         _uiManager = GameObject.Find("UI_Manager").GetComponent<UIManager>();
+        _spawnManager = GameObject.Find("Spawn_Manager").GetComponent<SpawnManager>();
         
         if (_uiManager == null)
         {
             Debug.LogError("Couldn't find UI manager from Game manager.");
+        }
+        if (_uiManager == null)
+        {
+            Debug.LogError("Couldn't find Spawn Manager from Game manager.");
         }
     }
 
@@ -49,12 +55,12 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator WaitForRestartRoutine()
     {
-        // TODO: for some reason this doesn't work on death...
         while (!Input.GetKeyDown(KeyCode.R))
         {
             yield return null;
         }
-        SceneManager.LoadSceneAsync("Scenes/Game");
+        _spawnManager.DestroyEnemiesAndPowerUps();
+        SceneManager.LoadSceneAsync("Scenes/Main_Menu");
         yield return null;
     }
     

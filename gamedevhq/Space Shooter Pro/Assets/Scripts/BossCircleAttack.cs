@@ -30,15 +30,22 @@ public class BossCircleAttack : MonoBehaviour
 
     void Start()
     {
-        _boss = transform.parent.gameObject;
-        Vector3 bossPosition = _boss.transform.position;
+        BossEnemy bossEnemy = GameObject.FindObjectOfType<BossEnemy>();
+        Vector3 bossPosition = new Vector3();
+        if (bossEnemy != null)
+        {
+            bossPosition = bossEnemy.transform.position;
+        }
+        else
+        {
+            Debug.LogError("Boss circle attack couldn't find boss enemy. This is required for it to perform " +
+                           "it's anim. It will now be destroyed to prevent odd behavior.");
+            Destroy(this.gameObject);
+        }
         _bulletsSpawned = new HashSet<GameObject>();
         _attackAudio = this.transform.GetComponent<AudioSource>();
         _maximumBulletScaleT = _maximumBulletScale;
         
-        if (_boss == null) {
-            Debug.LogError("Boss circle attack cannot find boss, attack will not spawn relative to it.");
-        }
         if (_attackAudio == null) {
             Debug.LogError("Attack audio source not found on boss circle shot.");
         }

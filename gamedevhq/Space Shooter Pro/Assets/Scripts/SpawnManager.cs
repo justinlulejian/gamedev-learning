@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 public class SpawnManager : MonoBehaviour
 {
@@ -16,18 +13,17 @@ public class SpawnManager : MonoBehaviour
   private List<Powerup> _powerupObjContainer;
 
   [SerializeField]
-  private bool _stopSpawning = false;
+  private bool _stopSpawning;
   
   private Player _player;
   private WaveManager _waveManager;
   private GameManager _gameManager;
+  private UIManager _uiManager;
   
   // Enemy spawn logic.
   // Since we use Fibonacci to calculate, numbers beyond 6 get very high. 
-  // TODO(bug): Sometimes when _numberOfWavesRemaining == 1 there are two enemies/two waves that spawn?
   [SerializeField] 
   private int _numberOfEnemyWaves = 6;
-  // TODO: test what happens when _numberOfEnemyWaves == 0.
   private int _waveNumber; // What wave we are currently on.
 
   private void Start()
@@ -37,6 +33,7 @@ public class SpawnManager : MonoBehaviour
     _enemyContainer = _enemyContainerObj.GetComponent<EnemyContainer>();
     _waveManager = GameObject.Find("Wave_Manager").GetComponent<WaveManager>();
     _gameManager = GameObject.Find("Game_Manager").GetComponent<GameManager>(); 
+    _uiManager = GameObject.Find("UI_Manager").GetComponent<UIManager>(); 
     
     if (_player == null)
     {
@@ -52,41 +49,82 @@ public class SpawnManager : MonoBehaviour
     }
     if (_gameManager == null)
     {
-      Debug.LogError("Couldn't find GameManager from UIManager");
+      Debug.LogError("Couldn't find GameManager from SpawnManager");
     }
-
+    if (_uiManager == null)
+    {
+      Debug.LogError("Couldn't find UI Manager from SpawnManager");
+    }
   }
 
   public void StartSpawning()
   {
     StartCoroutine(SpawnWavesRoutine());
+    StartCoroutine(MonitorPlayerAmmoSurvivalSpawnRoutine());
   }
 
   private IEnumerator SpawnWavesRoutine()
   {
-    while (_waveNumber <= _numberOfEnemyWaves && _stopSpawning == false)
+    // If there are enemy waves to spawn, and we've not spawned more waves than desired, and the game hasn't ended...
+    while (_numberOfEnemyWaves > 0 && _waveNumber <= _numberOfEnemyWaves && _stopSpawning == false)
     {
       yield return new WaitUntil(() => CanRequestAnotherWave());
 
       _waveManager.SpawnWave(_waveNumber);
       _waveNumber++;
+      _uiManager.UpdateWaveNumber(_waveNumber.ToString());
     }
 
     // Wait until all enemies in the final wave have been cleared before proceeding to boss.
-    yield return new WaitUntil(() => CanRequestAnotherWave());
+    yield return new WaitUntil(() => CanRequestAnotherWave() && !_player.IsDestroyed);
     // TODO(Improvement): Change music to boss music on spawn, then play success music on win.
     _waveManager.SpawnBossWave();
+    _uiManager.UpdateWaveNumber("Boss!");
+    
+    // Wait for the final boss wave to resolve, either all enemies destroyed, or player is destroyed (player
+    // destroy handled elsewhere).
+    yield return new WaitUntil(() => CanRequestAnotherWave() || GetAllOnScreenEnemies().Count == 0);
+    _stopSpawning = true;
     
     // Display win for player since all waves appear to be done, but only if Player survived.
-    yield return new WaitUntil(() => CanRequestAnotherWave() || _player.IsDestroyed);
-    _stopSpawning = true;
-
-    if (_player.IsDestroyed)
+    if (!_player.IsDestroyed)
     {
-      _gameManager.GameOver();
+      _gameManager.GameWin();
     }
+    // Wipe the scene clean of enemies and PowerUps while waiting for user to setup scene.
     DestroyEnemiesAndPowerUps();
-    _gameManager.GameWin();
+  }
+
+  private bool NoAmmoPowerUpsAvailable()
+  {
+    List<Powerup> powerUps = GetAllOnScreenPowerUps();
+    foreach (Powerup powerUp in powerUps)
+    {
+      // Ammo powerup. Powerup.cs <c>_powerUpID </c>
+      if (powerUp.GetPowerUpID() == 3)
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // If the player is fighting waves and they run out of ammo spawn one for them so they can fight on.
+  private IEnumerator MonitorPlayerAmmoSurvivalSpawnRoutine()
+  {
+    while (true)
+    {
+      yield return new WaitUntil(() => _player.GetCurrentAmmoCount() == 0);
+      yield return new WaitUntil(() => NoAmmoPowerUpsAvailable());
+      // This seems redundant, but since it runs so often it very often is past the above check which
+      // ends up causing a double-spawn of ammo to occur unless we double-check here.
+      if (_player.GetCurrentAmmoCount() == 0)
+      {
+        // Make it seem like the game isn't omniscient :P.
+        yield return new WaitForSeconds(1.5f);
+        _waveManager.SpawnAmmoPowerUp();
+      }
+    }
   }
 
   public List<Powerup> GetAllOnScreenPowerUps()
@@ -120,7 +158,7 @@ public class SpawnManager : MonoBehaviour
   
   public void AddPowerUpToGame(GameObject powerUp)
   {
-    _powerupObjContainer.Add(_powerupContainer.GetComponent<Powerup>());
+    _powerupObjContainer.Add(powerUp.GetComponent<Powerup>());
     powerUp.transform.parent = _powerupContainer.transform;
   }
   
@@ -136,9 +174,7 @@ public class SpawnManager : MonoBehaviour
     Destroy(powerUp.gameObject);
   }
 
-  // TODO: this should be given to wave manager as a "destroywave" method that cleans up anything
-  // in the current wave that was spawned. Spawn manager can still handle weapons manager stuff though.
-  private void DestroyEnemiesAndPowerUps()
+  public void DestroyEnemiesAndPowerUps()
   {
     _enemyContainer.RemoveAllEnemies();
     
@@ -146,8 +182,6 @@ public class SpawnManager : MonoBehaviour
     {
       Destroy(powerUp.gameObject);
     }
-    // TODO: Delete all laser and missile objects otherwise they (funnily) just float around after
-    // gameover if they are present when player dies. Now possible with weapons manager?.
   }
 
   public bool ShouldStopSpawning()
@@ -158,6 +192,5 @@ public class SpawnManager : MonoBehaviour
   public void OnPlayerDeath()
   {
     _stopSpawning = true;
-    DestroyEnemiesAndPowerUps();
   }
 }
