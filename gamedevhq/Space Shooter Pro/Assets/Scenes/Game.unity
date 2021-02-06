@@ -258,8 +258,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 910a139b165d40244ad3db874833f02a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-<<<<<<< HEAD
-=======
   _ammoPowerupPrefab: {fileID: 3784937069146104167, guid: 1e578d51c4655004092c127444869de1,
     type: 3}
   percentOfEnemiesPerWave: 70
@@ -308,7 +306,6 @@ MonoBehaviour:
   _timeBetweenWaves: 3
   _timeBetweenWavesMultipler: 1
   _timeBetweenObjectSpawnsDuringWave: 0.3
->>>>>>> d3d9bd8c0920f1a1fa9899c06c0c387f2d3dc125
 --- !u!4 &252880503
 Transform:
   m_ObjectHideFlags: 0
@@ -321,10 +318,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-<<<<<<< HEAD
-  m_RootOrder: 12
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-=======
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &368414676
@@ -405,7 +398,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 368414676}
   m_CullTransparentMesh: 0
->>>>>>> d3d9bd8c0920f1a1fa9899c06c0c387f2d3dc125
 --- !u!1 &437602704
 GameObject:
   m_ObjectHideFlags: 0
