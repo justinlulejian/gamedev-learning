@@ -200,9 +200,10 @@ public class AvoidShotEnemy : Enemy
         transform.rotation = _origRotation * Quaternion.AngleAxis(
             360 * animCurrentSlerpTime / _animSlerpTime, Vector3.up);  // Vector3.up in 2D is y.
     }
-    
-    protected override void DestroyEnemy()
+
+    public override void DestroyEnemy()
     {
+        base.WasDefeated();
         Instantiate(_deathPrefab, transform.position, Quaternion.identity);
         if (_audioSource.enabled)
         {
@@ -214,7 +215,6 @@ public class AvoidShotEnemy : Enemy
         // if they go into explosion after shooting them so that doesn't work as-is. Maybe it's because I need to
         // destroy CircleCollider rather than PolygonCollider2D?
         this.gameObject.SetActive(false);
-        base.WasDefeated();
         base.RemoveEnemyFromGame(2.8f);
     }
 }

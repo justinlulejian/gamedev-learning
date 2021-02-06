@@ -32,15 +32,15 @@ public class AreaOfEffectEnemy : Enemy
         }
     }
 
-    protected override void DestroyEnemy()
+    public override void DestroyEnemy()
     { 
+        base.WasDefeated();
         Instantiate(_deathPrefab, transform.position, Quaternion.identity);
         if (_audioSource.enabled)
         {
             _audioSource.Play();
         }
         Destroy(GetComponent<CircleCollider2D>());
-        base.WasDefeated();
         this.gameObject.SetActive(false);
         base.RemoveEnemyFromGame(2.8f);
     }

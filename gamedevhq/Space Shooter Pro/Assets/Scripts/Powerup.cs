@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using UnityEngine;
-using UnityEngine.Rendering;
+﻿using UnityEngine;
 using Debug = UnityEngine.Debug;
 
 public class Powerup : MonoBehaviour
@@ -74,6 +69,11 @@ public class Powerup : MonoBehaviour
     _playerCollecting = collecting;
     _lastPlayerPosition = playerPosition;
 
+  }
+
+  public int GetPowerUpID()
+  {
+    return _powerupID;
   }
 
     private void OnTriggerEnter2D(Collider2D other)
