@@ -16,7 +16,7 @@ public class Player : MonoBehaviour
   // Update is called once per frame
   void Update()
   {
-    points = 0;
+    var points = 0;
 
     switch(points)
     {
