@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR;
@@ -6,30 +7,20 @@ using UnityEngine.XR;
 public class Player : MonoBehaviour
 {
 
+    public static event Action onTurnRed;
 
   // Start is called before the first frame update
   void Start()
   {
-
   }
 
   // Update is called once per frame
   void Update()
   {
-    var points = 0;
-
-    switch(points)
-    {
-      case 50:
-        Debug.Log("Points 50!");
-        break;
-      case 100:
-        Debug.Log("Points 1001");
-        break;
-      default:
-        Debug.Log("You need 50 or 100!");
-        break;
-    }
-
+      if (Input.GetKeyDown(KeyCode.Space))
+      {
+          // raise event that space key pressed
+          onTurnRed?.Invoke();
+      }
   }
 }
