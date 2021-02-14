@@ -5,32 +5,32 @@ using UnityEngine;
 
 public class Cube : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void OnEnable()
+    private MeshRenderer _meshRenderer;
+
+    private void Start()
     {
-        Main.onCompleteRoutine += DoStuffAfterMainRoutineComplete;
+        _meshRenderer = GetComponent<MeshRenderer>();
+        if (_meshRenderer == null)
+        {
+            Debug.Log("meshrenderer is null on cube");
+        }
+       
     }
 
-    private void DoStuffAfterMainRoutineComplete()
+    private void Update()
     {
-        Debug.Log("Hey I'm the Cube and now I can do stuff now that that Main routine is donezo!!! Callbacks woooooo");
+        if (Input.GetKeyDown(KeyCode.I) && _meshRenderer.enabled)
+        {
+            StartCoroutine(HideCubeForSeconds(5f));
+        }
     }
 
-    private string CutCharactersAndReturnLength(string s)
+    private IEnumerator HideCubeForSeconds(float seconds)
     {
-        // Debug.Log($"cutting length from string in cube: {this.GetInstanceID().ToString()}");
-        string n = s.Substring(0, s.Length - 1) + this.GetInstanceID().ToString();
-        Debug.Log($"cube: {this.GetInstanceID().ToString()} new string returned is: {n}");
-        return n;
-    } 
-
-    private void ChangeCubePosition(Vector3 pos)
-    {
-        transform.position = pos;
-    }
-
-    private void OnDisable()
-    {
-        Main.onCompleteRoutine -= DoStuffAfterMainRoutineComplete;
+        _meshRenderer.enabled = false;
+        Debug.Log("Set meshrenderer to false");
+        yield return new WaitForSeconds(seconds);
+        _meshRenderer.enabled = true;
+        Debug.Log("Set meshrenderer to true");
     }
 }
